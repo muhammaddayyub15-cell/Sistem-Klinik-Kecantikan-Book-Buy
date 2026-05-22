@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Auth\Services\AuthService;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Service\AuthService;
 use App\Shared\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class AuthController extends Controller
 {
@@ -19,45 +22,40 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-    // register: membuat user baru
-    public function register(Request $request): JsonResponse
+    // register: endpoint publik untuk pendaftaran user baru
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users|max:255',
-            'password' => 'required|string|min:8',
-            'role' => 'nullable|string|in:admin,doctor,patient,staff',
-        ]);
+        $result = $this->authService->register($request->validated());
 
-        $user = $this->authService->register($validated);
-
-        return $this->successResponse($user, 'User registered successfully', 201);
+        return $this->successResponse(
+            data: $result,
+            message: 'Registrasi berhasil.',
+            statusCode: Response::HTTP_CREATED
+        );
     }
 
-    // login: autentikasi user dan generate token
-    public function login(Request $request): JsonResponse
+    // login: endpoint publik untuk autentikasi
+    public function login(LoginRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+        $result = $this->authService->login($request->validated());
 
-        $user = $this->authService->login($validated);
-
-        return $this->successResponse($user, 'Login successful');
+        return $this->successResponse(
+            data: $result,
+            message: 'Login berhasil.'
+        );
     }
 
-    // logout: menghapus token user
-    public function logout(): JsonResponse
+    // logout: revoke token yang sedang dipakai (butuh auth:sanctum middleware)
+    public function logout(Request $request): JsonResponse
     {
-        $this->authService->logout();
+        $this->authService->logout($request->user());
 
-        return $this->successResponse(null, 'Logged out successfully');
+        return $this->successResponse(message: 'Logout berhasil.');
     }
 
-    // me: mengambil data user yang sedang login
+    // me: kembalikan data user yang sedang login
     public function me(Request $request): JsonResponse
     {
-        return $this->successResponse($request->user());
+        return $this->successResponse(data: $request->user());
     }
 }

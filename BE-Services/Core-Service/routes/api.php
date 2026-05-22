@@ -1,24 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use Illuminate\Support\Facades\Route;
 
-// public routes
+
+// --- Auth ---
 Route::prefix('auth')->group(function () {
 
-    // register: endpoint registrasi user
+    // Publik (tidak butuh token)
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login',    [AuthController::class, 'login']);
 
-    // login: endpoint login user
-    Route::post('/login', [AuthController::class, 'login']);
-});
-
-// protected routes
-Route::middleware('auth:sanctum')->group(function () {
-
-    // logout: endpoint logout user
-    Route::post('/logout', [AuthController::class, 'logout']);
-
-    // me: endpoint ambil data user login
-    Route::get('/me', [AuthController::class, 'me']);
+    // Private (butuh token Sanctum)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me',      [AuthController::class, 'me']);
+    });
 });
