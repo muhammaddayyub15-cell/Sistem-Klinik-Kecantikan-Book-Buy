@@ -1,29 +1,23 @@
 <?php
 
-namespace App\Http\Requests\Modules\Auth\Requests;
+namespace App\Modules\Auth\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    // authorize: menentukan apakah request boleh dilakukan
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    // rules: validasi input login
     public function rules(): array
     {
         return [
-            //
+            'email' => 'required|email',
+            'password' => 'required|string',
         ];
     }
 }

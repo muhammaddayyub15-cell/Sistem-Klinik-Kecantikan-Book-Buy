@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Service\AuthService;
+use App\Modules\Auth\Services\AuthService;
 use App\Shared\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +19,7 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
+    // register: membuat user baru
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -33,6 +34,7 @@ class AuthController extends Controller
         return $this->successResponse($user, 'User registered successfully', 201);
     }
 
+    // login: autentikasi user dan generate token
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -45,6 +47,7 @@ class AuthController extends Controller
         return $this->successResponse($user, 'Login successful');
     }
 
+    // logout: menghapus token user
     public function logout(): JsonResponse
     {
         $this->authService->logout();
@@ -52,6 +55,7 @@ class AuthController extends Controller
         return $this->successResponse(null, 'Logged out successfully');
     }
 
+    // me: mengambil data user yang sedang login
     public function me(Request $request): JsonResponse
     {
         return $this->successResponse($request->user());
