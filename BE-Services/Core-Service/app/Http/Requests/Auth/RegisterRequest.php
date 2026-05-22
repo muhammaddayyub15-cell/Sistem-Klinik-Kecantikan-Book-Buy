@@ -24,7 +24,7 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'                  => 'required|string|max:255',
+            'full_name'             => 'required|string|max:255',
             'email'                 => 'required|email|unique:users,email',
             'password'              => 'required|string|min:8|confirmed',
             // admin dikeluarkan dari endpoint publik
@@ -38,7 +38,7 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'                  => 'Nama wajib diisi.',
+            'full_name.required'             => 'Nama lengkap wajib diisi.',
             'email.required'                 => 'Email wajib diisi.',
             'email.email'                    => 'Format email tidak valid.',
             'email.unique'                   => 'Email sudah terdaftar.',
