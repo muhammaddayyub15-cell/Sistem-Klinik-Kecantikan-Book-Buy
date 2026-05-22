@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modules\Booking\Repositories;
+namespace App\Service\Repositories;
 
-class BookingRepository
+use App\Models\Booking\Booking;
+use App\Shared\Base\BaseRepository;
+
+class BookingRepository extends BaseRepository
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function __construct(Booking $booking)
     {
-        //
+        parent::__construct($booking);
     }
 }

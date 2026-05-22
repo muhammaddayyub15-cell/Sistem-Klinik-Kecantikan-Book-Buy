@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modules\Doctor\Repositories;
+namespace App\Service\Repositories;
 
-class DoctorRepository
+use App\Models\Doctor\Doctor;
+use App\Shared\Base\BaseRepository;
+
+class DoctorRepository extends BaseRepository
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function __construct(Doctor $doctor)
     {
-        //
+        parent::__construct($doctor);
     }
 }

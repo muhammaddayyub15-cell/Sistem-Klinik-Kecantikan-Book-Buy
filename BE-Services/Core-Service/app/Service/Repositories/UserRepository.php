@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modules\User\Repositories;
+namespace App\Service\Repositories;
 
-class UserRepository
+use App\Models\User\User;
+use App\Shared\Base\BaseRepository;
+
+class UserRepository extends BaseRepository
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function __construct(User $user)
     {
-        //
+        parent::__construct($user);
     }
 }

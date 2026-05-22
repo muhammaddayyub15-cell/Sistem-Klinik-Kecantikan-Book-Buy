@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modules\Patient\Services;
+namespace App\Service;
 
-class PatientService
+use App\Service\Repositories\PatientRepository;
+use App\Shared\Base\BaseService;
+
+class PatientService extends BaseService
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function __construct(PatientRepository $patientRepository)
     {
-        //
+        parent::__construct($patientRepository);
     }
 }

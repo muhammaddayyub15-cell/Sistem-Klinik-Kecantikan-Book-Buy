@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Modules\Service\Services;
+namespace App\Service;
 
-class ServiceService
+use App\Service\Repositories\ServiceRepository;
+use App\Shared\Base\BaseService;
+
+class ServiceService extends BaseService
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function __construct(ServiceRepository $serviceRepository)
     {
-        //
+        parent::__construct($serviceRepository);
     }
 }
