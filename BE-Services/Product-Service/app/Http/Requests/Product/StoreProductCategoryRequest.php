@@ -2,28 +2,27 @@
 
 namespace App\Http\Requests\Product;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+// StoreProductCategoryRequest: Validasi request saat membuat kategori produk baru.
 class StoreProductCategoryRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            //
+            'category_name' => 'required|string|max:255|unique:product_categories,category_name',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'category_name.unique' => 'Nama kategori sudah ada.',
         ];
     }
 }

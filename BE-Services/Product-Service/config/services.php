@@ -23,7 +23,7 @@ return [
     ],
 
     'ses' => [
-        'key' => env('AWS_ACCESS_KEY_ID'),
+        'key'    => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
@@ -31,8 +31,14 @@ return [
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+            'channel'              => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+
+    // Internal service token — digunakan oleh AuthenticateApi middleware
+    // untuk memvalidasi request yang masuk dari API Gateway atau service lain.
+    // Nilai diambil dari .env — pastikan INTERNAL_SERVICE_TOKEN diisi dan
+    // nilainya sama di semua service (Core, Product, Order, Reporting).
+    'internal_token' => env('INTERNAL_SERVICE_TOKEN'),
 
 ];

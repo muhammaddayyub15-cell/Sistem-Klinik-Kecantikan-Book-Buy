@@ -6,20 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('stock_logs', function (Blueprint $table) {
             $table->id();
+            // FK ke products
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            // Positif = stok masuk, negatif = stok keluar
+            $table->integer('change_qty');
+            $table->enum('type', ['in', 'out', 'adjustment']);
+            // Opsional — diisi jika perubahan stok berasal dari order (reference ke order_id di Order Service)
+            $table->unsignedBigInteger('reference_id')->nullable();
+            $table->string('notes')->nullable();
+            // Tidak pakai softDeletes — log tidak boleh dihapus untuk menjaga audit trail
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('stock_logs');

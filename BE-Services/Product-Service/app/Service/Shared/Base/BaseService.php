@@ -2,13 +2,16 @@
 
 namespace App\Service\Shared\Base;
 
-class BaseService
+// BaseService: Kelas induk untuk semua service class di Product Service.
+// Tujuan: memisahkan business logic dari controller (thin controller, fat service).
+// Setiap child service menerima repository via constructor injection.
+abstract class BaseService
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    // $repository: Repository yang di-inject, digunakan untuk akses data layer.
+    protected BaseRepository $repository;
+
+    public function __construct(BaseRepository $repository)
     {
-        //
+        $this->repository = $repository;
     }
 }
