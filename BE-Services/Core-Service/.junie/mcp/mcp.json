@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/Users/ayub/.config/herd-lite/bin/php",
+            "args": [
+                "/Users/ayub/Booking-Buy-Clinic-Erha-App/Services/Core-Service/CoreService/artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}
