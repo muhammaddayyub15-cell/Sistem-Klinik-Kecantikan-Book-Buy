@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Modules\Auth\Services;
+namespace App\Service;
 
-use App\Modules\User\Repositories\UserRepository;
+use App\Service\Repositories\UserRepository;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
+    // AuthService tidak extends BaseService karena flow auth (login/logout/token)
+
     protected UserRepository $userRepository;
 
     public function __construct(UserRepository $userRepository)
@@ -15,15 +17,12 @@ class AuthService
         $this->userRepository = $userRepository;
     }
 
-    // register: membuat user baru + hash password + set role default
+    // register: membuat user baru + hash password + generate token langsung
     public function register(array $data): array
     {
-        // Hash password sebelum disimpan
         $data['password'] = Hash::make($data['password']);
 
-        $user = $this->userRepository->create($data);
-
-        // generate token langsung setelah register
+        $user  = $this->userRepository->create($data);
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return [
@@ -33,10 +32,9 @@ class AuthService
     }
 
     // login: validasi credential secara manual (stateless API, tidak pakai session)
+    // Auth::attempt() tidak dipakai karena menggunakan session driver
     public function login(array $credentials): array
     {
-        // [FIX] Auth::attempt() menggunakan session driver — tidak cocok untuk stateless API
-        // Ganti dengan manual lookup + Hash::check() agar kompatibel dengan Sanctum token
         $user = $this->userRepository->findByEmail($credentials['email']);
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
@@ -52,11 +50,9 @@ class AuthService
             ]);
         }
 
-        // update last_login_at setiap kali login berhasil
+        // update last_login_at setiap login berhasil
         $this->userRepository->updateLastLogin($user->id);
 
-        // generate token (revoke semua token lama opsional — aktifkan jika single session)
-        // $user->tokens()->delete();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return [
@@ -65,7 +61,7 @@ class AuthService
         ];
     }
 
-    // logout: revoke hanya token yang sedang dipakai (bukan semua token)
+    // logout: revoke hanya token yang sedang dipakai
     public function logout($user): void
     {
         if ($user && $user->currentAccessToken()) {

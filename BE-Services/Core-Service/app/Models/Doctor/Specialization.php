@@ -10,13 +10,15 @@ class Specialization extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'spec_id';
+
     protected $fillable = [
-        'name',
+        'spec_name',
         'description',
     ];
 
     public function doctors(): HasMany
     {
-        return $this->hasMany(Doctor::class, 'specialization_id');
+        return $this->hasMany(Doctor::class, 'spec_id', 'spec_id');
     }
 }

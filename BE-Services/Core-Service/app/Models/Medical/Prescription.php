@@ -10,23 +10,28 @@ class Prescription extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'presc_id';
+
     protected $fillable = [
-        'medical_record_id',
-        'product_id_snapshot',
+        'record_id',
+        'product_id',
+        // Snapshot data produk — disimpan agar tidak berubah jika produk diedit
         'product_name_snapshot',
         'qty',
-        'dosage_instructions',
+        'dosage_instruction',
+        'prescribed_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'qty' => 'integer',
+            'qty'           => 'integer',
+            'prescribed_at' => 'datetime',
         ];
     }
 
     public function medicalRecord(): BelongsTo
     {
-        return $this->belongsTo(MedicalRecord::class, 'medical_record_id');
+        return $this->belongsTo(MedicalRecord::class, 'record_id', 'record_id');
     }
 }

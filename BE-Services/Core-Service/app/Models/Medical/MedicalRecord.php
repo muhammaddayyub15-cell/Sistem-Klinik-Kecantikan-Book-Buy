@@ -14,32 +14,43 @@ class MedicalRecord extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'record_id';
+
     protected $fillable = [
         'booking_id',
         'patient_id',
         'doctor_id',
         'diagnosis',
-        'treatment_plan',
-        'notes',
+        'prescription_text',
+        'recorded_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'recorded_at' => 'datetime',
+        ];
+    }
+
+    // Relasi dengan model lain
 
     public function booking(): BelongsTo
     {
-        return $this->belongsTo(Booking::class, 'booking_id');
+        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
 
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class, 'patient_id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
 
     public function doctor(): BelongsTo
     {
-        return $this->belongsTo(Doctor::class, 'doctor_id');
+        return $this->belongsTo(Doctor::class, 'doctor_id', 'doctor_id');
     }
 
     public function prescriptions(): HasMany
     {
-        return $this->hasMany(Prescription::class, 'medical_record_id');
+        return $this->hasMany(Prescription::class, 'record_id', 'record_id');
     }
 }

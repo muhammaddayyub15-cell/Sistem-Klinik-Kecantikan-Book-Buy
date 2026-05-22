@@ -10,23 +10,25 @@ class DoctorSchedule extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'doctsched_id';
+
     protected $fillable = [
         'doctor_id',
-        'day_of_week',
+        'day',
         'start_time',
         'end_time',
-        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
+            'start_time' => 'datetime:H:i',
+            'end_time'   => 'datetime:H:i',
         ];
     }
 
     public function doctor(): BelongsTo
     {
-        return $this->belongsTo(Doctor::class, 'doctor_id');
+        return $this->belongsTo(Doctor::class, 'doctor_id', 'doctor_id');
     }
 }

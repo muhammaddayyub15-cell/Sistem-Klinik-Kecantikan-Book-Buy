@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Service;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Service\StoreServiceRequest;
+use App\Http\Requests\Service\UpdateServiceRequest;
 use App\Service\ServiceService;
 use App\Shared\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
@@ -21,48 +22,35 @@ class ServiceController extends Controller
 
     public function index(): JsonResponse
     {
+        // Ambil semua layanan via service layer
         $services = $this->serviceService->all();
         return $this->successResponse($services);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreServiceRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:service_categories,id',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'duration' => 'required|integer|min:1',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $service = $this->serviceService->create($validated);
+        // Validasi sudah ditangani StoreServiceRequest
+        $service = $this->serviceService->create($request->validated());
         return $this->successResponse($service, 'Service created successfully', 201);
     }
 
-    public function show($id): JsonResponse
+    public function show(string $id): JsonResponse
     {
+        // findOrFail otomatis lempar 404 jika tidak ditemukan
         $service = $this->serviceService->findOrFail($id);
         return $this->successResponse($service);
     }
 
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdateServiceRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'category_id' => 'nullable|exists:service_categories,id',
-            'name' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
-            'duration' => 'nullable|integer|min:1',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $service = $this->serviceService->update($id, $validated);
+        // Validasi sudah ditangani UpdateServiceRequest
+        $service = $this->serviceService->update($id, $request->validated());
         return $this->successResponse($service, 'Service updated successfully');
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
+        // Soft delete karena model pakai SoftDeletes
         $this->serviceService->delete($id);
         return $this->successResponse(null, 'Service deleted successfully');
     }

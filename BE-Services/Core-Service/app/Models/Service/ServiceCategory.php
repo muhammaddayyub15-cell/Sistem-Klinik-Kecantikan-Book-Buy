@@ -10,13 +10,22 @@ class ServiceCategory extends Model
 {
     use HasFactory;
 
+    // Eksplisit nama tabel sesuai ERD
+    protected $table = 'services_categories';
+
+    // PK sesuai ERD: category_id (bukan default 'id')
+    protected $primaryKey = 'category_id';
+
     protected $fillable = [
-        'name',
-        'description',
+        // Sesuai ERD: category_name 
+        'category_name',
+
+        // Field description dihapus karena tidak ada di ERD
     ];
 
+    // Relasi ke Service (1:N — satu kategori punya banyak layanan)
     public function services(): HasMany
     {
-        return $this->hasMany(Service::class, 'category_id');
+        return $this->hasMany(Service::class, 'category_id', 'category_id');
     }
 }
