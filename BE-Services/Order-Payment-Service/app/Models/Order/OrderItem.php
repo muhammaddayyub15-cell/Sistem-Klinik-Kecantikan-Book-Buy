@@ -17,8 +17,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 // Alasan snapshot harga (unit_price_snapshot):
 //   Harga produk bisa berubah kapan saja di Product Service.
 //   Invoice harus mencatat harga saat transaksi, bukan harga hari ini.
-//   Ini identik dengan prinsip struk belanja — harga di struk tidak berubah
-//   meski harga produk naik keesokan harinya.
 class OrderItem extends Model
 {
     protected $table = 'order_items';

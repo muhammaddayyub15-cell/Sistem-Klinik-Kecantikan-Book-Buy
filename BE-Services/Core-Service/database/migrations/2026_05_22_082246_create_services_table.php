@@ -15,7 +15,7 @@ return new class extends Migration
                   ->onDelete('restrict');
             $table->string('name');
             $table->text('description')->nullable();
-            $table->unsignedDecimal('base_price', 12, 2)->default(0);
+            $table->Decimal('base_price', 12, 2)->default(0);
             $table->string('unit')->nullable(); // contoh: "sesi", "30 menit"
             $table->boolean('is_active')->default(true);
             $table->softDeletes();

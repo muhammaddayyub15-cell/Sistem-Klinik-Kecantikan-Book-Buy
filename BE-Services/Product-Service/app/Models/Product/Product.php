@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 // Model Product: Merepresentasikan tabel PRODUCTS di Product Service DB.
-// Kolom penting:
 //   - SKU: kode unik produk untuk identifikasi stok
 //   - stock_qty: jumlah stok saat ini (diupdate via StockLog)
 //   - price: harga satuan produk

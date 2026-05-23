@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 // CATATAN ARSITEKTUR — SNAPSHOT PATTERN:
 // Tabel ini TIDAK memiliki FK hidup ke Core Service DB atau Product Service DB.
 // Data dari service lain disimpan sebagai kolom snapshot (string/integer biasa).
-// Ini sesuai prinsip microservice — tidak ada cross-DB FK.
 //
 // Kolom snapshot yang disimpan:
 //   - patient_id_snapshot   : ID pasien saat order dibuat (dari Core Service)

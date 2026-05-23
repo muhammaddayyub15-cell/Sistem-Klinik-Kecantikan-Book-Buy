@@ -58,4 +58,17 @@ class AuthController extends Controller
     {
         return $this->successResponse(data: $request->user());
     }
+
+    // validateToken: endpoint untuk cek apakah token masih valid dan kembalikan data user (butuh auth:sanctum middleware)
+    public function validateToken(Request $request): JsonResponse
+{
+    $user = $request->user();
+
+    return $this->successResponse('Token valid.', [
+        'user_id' => $user->user_id,
+        'email'   => $user->email,
+        'role'    => $user->role,
+        'name'    => $user->full_name,
+    ]);
+}
 }

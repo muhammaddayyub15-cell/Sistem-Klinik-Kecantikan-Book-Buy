@@ -21,7 +21,6 @@ class Payment extends Model
 {
     protected $table = 'payments';
 
-    // Payment tidak butuh softDeletes — record pembayaran tidak boleh dihapus.
     public $timestamps = true;
 
     protected $fillable = [
