@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+// RoleMiddleware: Otorisasi berdasarkan role user untuk Order-Payment Service.
+//
+// CATATAN ARSITEKTUR:
+// Role user tidak divalidasi dari token di sini — role sudah diekstrak oleh API Gateway
+// dari JWT, lalu diteruskan via header X-User-Role ke semua service.
+// Middleware ini hanya membaca header tersebut dan membandingkan dengan role yang diizinkan.
+//
+// Contoh penggunaan di route:
+//   Route::post('/orders', ...)->middleware('role:admin,patient');
+//   Route::get('/orders', ...)->middleware('role:admin');
+class RoleMiddleware
+{
+    public function handle(Request $request, Closure $next, string ...$roles): Response
+    {
+        $userRole = $request->header('X-User-Role');
+
+        if (!$userRole || !in_array($userRole, $roles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses resource ini.',
+            ], 403);
+        }
+
+        return $next($request);
+    }
+}
