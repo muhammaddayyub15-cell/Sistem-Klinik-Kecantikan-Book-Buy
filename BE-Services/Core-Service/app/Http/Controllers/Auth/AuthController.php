@@ -9,7 +9,7 @@ use App\Service\AuthService;
 use App\Shared\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
@@ -22,7 +22,6 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-    // register: endpoint publik untuk pendaftaran user baru
     public function register(RegisterRequest $request): JsonResponse
     {
         $result = $this->authService->register($request->validated());
@@ -30,11 +29,10 @@ class AuthController extends Controller
         return $this->successResponse(
             data: $result,
             message: 'Registrasi berhasil.',
-            statusCode: Response::HTTP_CREATED
+            code: Response::HTTP_CREATED
         );
     }
 
-    // login: endpoint publik untuk autentikasi
     public function login(LoginRequest $request): JsonResponse
     {
         $result = $this->authService->login($request->validated());
@@ -45,30 +43,35 @@ class AuthController extends Controller
         );
     }
 
-    // logout: revoke token yang sedang dipakai (butuh auth:sanctum middleware)
     public function logout(Request $request): JsonResponse
     {
         $this->authService->logout($request->user());
 
-        return $this->successResponse(message: 'Logout berhasil.');
+        return $this->successResponse(
+            data: null,
+            message: 'Logout berhasil.'
+        );
     }
 
-    // me: kembalikan data user yang sedang login
     public function me(Request $request): JsonResponse
     {
-        return $this->successResponse(data: $request->user());
+        return $this->successResponse(
+            data: $request->user()
+        );
     }
 
-    // validateToken: endpoint untuk cek apakah token masih valid dan kembalikan data user (butuh auth:sanctum middleware)
     public function validateToken(Request $request): JsonResponse
-{
-    $user = $request->user();
+    {
+        $user = $request->user();
 
-    return $this->successResponse('Token valid.', [
-        'user_id' => $user->user_id,
-        'email'   => $user->email,
-        'role'    => $user->role,
-        'name'    => $user->full_name,
-    ]);
-}
+        return $this->successResponse(
+            data: [
+                'user_id' => $user->user_id,
+                'email'   => $user->email,
+                'role'    => $user->role,
+                'name'    => $user->full_name,
+            ],
+            message: 'Token valid.'
+        );
+    }
 }

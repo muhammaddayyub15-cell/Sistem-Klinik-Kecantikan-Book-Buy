@@ -3,6 +3,17 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+
+// -- Import semua Model --
+use App\Models\Booking\Booking;
+use App\Models\Doctor\Doctor;
+use App\Models\Medical\MedicalRecord;
+use App\Models\Medical\Prescription;
+use App\Models\Patient\Patient;
+use App\Models\Service\Service;
+use App\Models\User\User;
+
+// -- Import semua Repository --
 use App\Service\Repositories\BookingRepository;
 use App\Service\Repositories\DoctorRepository;
 use App\Service\Repositories\MedicalRepository;
@@ -19,81 +30,56 @@ use App\Service\PatientService;
 use App\Service\ServiceService;
 use App\Service\UserService;
 use App\Service\SendBookingToOrderService;
+
+// -- Import Event & Listener --
 use App\Events\Booking\BookingCreated;
 use App\Listeners\SendBookingToOrderListener;
-use App\Shared\Base\BaseRepository;
-use App\Shared\Base\BaseService;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * STATUS: Event BookingCreated sudah ada
-     * CATATAN: Jika listener SendBookingToOrderListener belum dibuat,
-     *          jalankan: php artisan make:listener SendBookingToOrderListener
-     *          lalu isi dengan logika memanggil SendBookingToOrderService.
-     */
     protected $listen = [
         BookingCreated::class => [
             SendBookingToOrderListener::class,
         ],
     ];
 
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         // ── BINDING REPOSITORY ──────────────────────────────────────
-        // STATUS: Semua Repository sudah ada di app/Service/Repositories/
-        // POLA: $this->app->singleton(Abstract::class, Concrete::class)
-        //       Singleton = satu instance digunakan sepanjang request lifecycle
 
-        $this->app->singleton(BookingRepository::class, function ($app) {
-            // BookingRepository butuh model Booking
-            // ERD: BOOKINGS table → doctor_id, patient_id, docsched_id, service_id
-            return new BookingRepository();
+        $this->app->singleton(BookingRepository::class, function () {
+            return new BookingRepository(new Booking());
         });
 
-        $this->app->singleton(DoctorRepository::class, function ($app) {
-            // ERD: DOCTORS table → user_id, spec_id, license_no, is_available
-            return new DoctorRepository();
+        $this->app->singleton(DoctorRepository::class, function () {
+            return new DoctorRepository(new Doctor());
         });
 
-        $this->app->singleton(MedicalRepository::class, function ($app) {
-            // ERD: MEDICAL_RECORDS + PRESCRIPTIONS table
-            return new MedicalRepository();
+        $this->app->singleton(MedicalRepository::class, function () {
+            return new MedicalRepository(new MedicalRecord(), new Prescription());
         });
 
-        $this->app->singleton(PatientRepository::class, function ($app) {
-            // ERD: PATIENTS table → user_id, dob, gender, blood_type, address
-            return new PatientRepository();
+        $this->app->singleton(PatientRepository::class, function () {
+            return new PatientRepository(new Patient());
         });
 
-        $this->app->singleton(ServiceRepository::class, function ($app) {
-            // ERD: SERVICES + SERVICES_CATEGORIES table
-            return new ServiceRepository();
+        $this->app->singleton(ServiceRepository::class, function () {
+            return new ServiceRepository(new Service());
         });
 
-        $this->app->singleton(UserRepository::class, function ($app) {
-            // ERD: USERS table → full_name, email, phone, role, password
-            return new UserRepository();
+        $this->app->singleton(UserRepository::class, function () {
+            return new UserRepository(new User());
         });
 
         // ── BINDING SERVICE ──────────────────────────────────────────
-        // STATUS: Semua Service sudah ada di app/Service/
-        // CATATAN: Service di-inject Repository via constructor,
-        //          pastikan constructor di BaseService menerima Repository.
 
         $this->app->singleton(AuthService::class, function ($app) {
-            // AuthService butuh UserRepository untuk validasi login/register
             return new AuthService(
                 $app->make(UserRepository::class)
             );
         });
 
         $this->app->singleton(BookingService::class, function ($app) {
-            // BookingService butuh BookingRepository + DoctorRepository
-            // (untuk cek jadwal dokter saat booking)
             return new BookingService(
                 $app->make(BookingRepository::class),
                 $app->make(DoctorRepository::class)
@@ -107,8 +93,6 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(MedicalService::class, function ($app) {
-            // MedicalService butuh MedicalRepository + BookingRepository
-            // (untuk validasi booking sebelum buat medical record)
             return new MedicalService(
                 $app->make(MedicalRepository::class),
                 $app->make(BookingRepository::class)
@@ -122,10 +106,6 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(ServiceService::class, function ($app) {
-            // CATATAN: Nama "ServiceService" memang terkesan ganda,
-            // ini karena entity-nya bernama "Service" (layanan klinik).
-            // Pertimbangkan rename menjadi "ClinicServiceService" atau
-            // "TreatmentService" untuk kejelasan di masa mendatang.
             return new ServiceService(
                 $app->make(ServiceRepository::class)
             );
@@ -137,31 +117,13 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        // ── BINDING SEND BOOKING TO ORDER SERVICE ───────────────────
-        // STATUS: File SendBookingToOrderService.php sudah dibuat
-        // FUNGSI: Service ini dipanggil saat event BookingCreated fired,
-        //         untuk mengirim data booking ke Order & Payment Service.
-        // ARSITEKTUR: Core Service DB → (HTTP/Queue) → Order & Payment Service DB
-        //             Lihat ERD: BOOKINGS → ORDERS (booking_id sebagai FK)
-
-        $this->app->singleton(SendBookingToOrderService::class, function ($app) {
+        $this->app->singleton(SendBookingToOrderService::class, function () {
             return new SendBookingToOrderService();
         });
     }
 
-    /**
-     * Bootstrap any application services.
-     *
-     * STATUS: Tidak ada konfigurasi khusus saat ini
-     * CATATAN: Tambahkan logic di sini jika butuh setup
-     *          setelah semua service ter-register, misalnya:
-     *          - Mendaftarkan custom validation rules
-     *          - Setup observer untuk model
-     *          - Konfigurasi Eloquent global scopes
-     */
     public function boot(): void
     {
-        // -- Contoh: Register Observer jika dibutuhkan --
-        // \App\Models\Booking\Booking::observe(\App\Observers\BookingObserver::class);
+        //
     }
 }

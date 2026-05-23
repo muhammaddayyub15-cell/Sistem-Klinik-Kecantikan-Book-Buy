@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\User\Models;
+namespace App\Models\User;
 
 use App\Modules\Patient\Models\Patient;
 use App\Modules\Doctor\Models\Doctor;

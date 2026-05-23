@@ -2,14 +2,14 @@
 
 namespace App\Service\Repositories;
 
-use App\Models\User;
+use App\Models\User\User;
 use App\Shared\Base\BaseRepository;
 
 class UserRepository extends BaseRepository
 {
     public function __construct(User $model)
     {
-        parent::__construct($model);
+        parent::__construct(new User());
     }
 
     // cari user berdasarkan email (dipakai AuthService::login)
