@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Patient\StorePatientRequest;
+use App\Http\Requests\Patient\UpdatePatientRequest;
 use App\Service\PatientService;
 use App\Shared\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class PatientController extends Controller
 {
@@ -21,47 +22,35 @@ class PatientController extends Controller
 
     public function index(): JsonResponse
     {
+        // Ambil semua data pasien via service
         $patients = $this->patientService->all();
         return $this->successResponse($patients);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StorePatientRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id|unique:patients,user_id',
-            'phone' => 'required|string|max:20',
-            'date_of_birth' => 'required|date',
-            'gender' => 'required|string|in:male,female,other',
-            'address' => 'nullable|string',
-            'medical_history' => 'nullable|string',
-        ]);
-
-        $patient = $this->patientService->create($validated);
+        // Validasi sudah ditangani StorePatientRequest
+        $patient = $this->patientService->create($request->validated());
         return $this->successResponse($patient, 'Patient profile created successfully', 201);
     }
 
-    public function show($id): JsonResponse
+    public function show(string $id): JsonResponse
     {
+        // Lempar 404 otomatis jika tidak ditemukan via findOrFail di BaseRepository
         $patient = $this->patientService->findOrFail($id);
         return $this->successResponse($patient);
     }
 
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdatePatientRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'phone' => 'nullable|string|max:20',
-            'date_of_birth' => 'nullable|date',
-            'gender' => 'nullable|string|in:male,female,other',
-            'address' => 'nullable|string',
-            'medical_history' => 'nullable|string',
-        ]);
-
-        $patient = $this->patientService->update($id, $validated);
+        // Validasi sudah ditangani UpdatePatientRequest
+        $patient = $this->patientService->update($id, $request->validated());
         return $this->successResponse($patient, 'Patient profile updated successfully');
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
+        // Soft delete karena model pakai SoftDeletes
         $this->patientService->delete($id);
         return $this->successResponse(null, 'Patient profile deleted successfully');
     }
