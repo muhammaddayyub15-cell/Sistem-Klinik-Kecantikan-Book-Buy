@@ -18,23 +18,16 @@ class Patient extends Model
     // Eksplisit nama tabel sesuai ERD (snake_case plural)
     protected $table = 'patients';
 
-    // Primary key sesuai ERD: patient_id (bukan default 'id')
+    // patient_id (bukan default 'id')
     protected $primaryKey = 'patient_id';
 
     protected $fillable = [
         'user_id',
-
-        // dob sesuai nama kolom di ERD
         'date_of_birth',
-
         'gender',
-
-        // blood_type ada di ERD tapi sebelumnya tidak ada di fillable
         'blood_type',
-
         'address',
-
-        // medical_history dihapus karena tidak ada di ERD
+        'medical_history', // mesih berupa text, bisa diubah ke JSON jika diperlukan
     ];
 
     protected function casts(): array
