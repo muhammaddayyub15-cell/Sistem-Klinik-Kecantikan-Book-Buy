@@ -16,18 +16,13 @@ class Service extends Model
     // Eksplisit nama tabel sesuai ERD
     protected $table = 'services';
 
-    // PK sesuai ERD: service_id (bukan default 'id')
+    // Service_id (bukan default 'id')
     protected $primaryKey = 'service_id';
 
     protected $fillable = [
         'category_id',
-
-        // Sesuai ERD: service_name (bukan name)
         'service_name',
-
         'description',
-
-        // Sesuai ERD: base_price (bukan price)
         'base_price',
 
         // deleted_at dikelola otomatis oleh SoftDeletes

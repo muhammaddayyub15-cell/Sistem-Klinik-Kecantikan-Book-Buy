@@ -9,7 +9,6 @@ class StoreServiceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // TODO: batasi hanya role admin/dokter yang bisa tambah layanan
         return true;
     }
 
@@ -19,15 +18,15 @@ class StoreServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Sesuai ERD: FK ke services_categories.category_id
+            // FK ke services_categories.category_id
             'category_id'  => 'required|exists:services_categories,category_id',
 
-            // Sesuai ERD: kolom service_name (bukan name)
+            // kolom service_name (bukan name)
             'service_name' => 'required|string|max:255',
 
             'description'  => 'nullable|string',
 
-            // Sesuai ERD: kolom base_price (bukan price)
+            // kolom base_price (bukan price)
             'base_price'   => 'required|numeric|min:0',
         ];
     }

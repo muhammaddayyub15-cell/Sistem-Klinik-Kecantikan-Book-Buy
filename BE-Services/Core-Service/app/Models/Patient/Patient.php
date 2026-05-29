@@ -27,7 +27,7 @@ class Patient extends Model
         'gender',
         'blood_type',
         'address',
-        'medical_history', // mesih berupa text, bisa diubah ke JSON jika diperlukan
+        'medical_history', // mesih berupa text, bisa diubah ke JSON jika diperlukan 
     ];
 
     protected function casts(): array
