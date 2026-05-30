@@ -4,19 +4,21 @@ import Navbar from "../ui/bar-side/Navbar";
 import Sidebar from "../ui/bar-side/Sidebar";
 
 /**
- * MainLayout — root layout for all authenticated routes.
+ * MainLayout — root layout untuk semua authenticated routes.
  *
- * Handles:
- * - Mobile: sidebar slides in as overlay (open/close via Navbar hamburger)
- * - Desktop: sidebar always visible; collapsible to icon-only mode
+ * Tanggung jawab komponen ini:
+ *   1. Menyimpan state sidebar (open / collapsed) — lifted karena dipakai Navbar & Sidebar
+ *   2. Menyediakan satu handler toggle yang context-aware (mobile vs desktop)
+ *   3. Menyusun struktur: Sidebar + [Navbar + main content]
  */
 export default function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile
-  const [collapsed, setCollapsed] = useState(false);        // desktop
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [collapsed, setCollapsed] = useState(false);
+
 
   const isDesktop = () => window.innerWidth >= 1024;
 
-  // Close mobile sidebar on resize to desktop
   useEffect(() => {
     const onResize = () => {
       if (isDesktop()) setSidebarOpen(false);
@@ -25,6 +27,12 @@ export default function MainLayout() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  /**
+   * handleMenuToggle — satu-satunya handler untuk tombol hamburger di Navbar.
+   *
+   * [NOTE] Navbar tidak perlu tahu soal breakpoint — ia cukup memanggil prop ini.
+   *        MainLayout yang memutuskan: toggle collapse (desktop) atau overlay (mobile).
+   */
   const handleMenuToggle = () => {
     if (isDesktop()) {
       setCollapsed((c) => !c);
@@ -37,37 +45,42 @@ export default function MainLayout() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#faf8f5" }}>
-      {/* Sidebar */}
+
+      {/* ── Sidebar ─────────────────────────────────────────────────────────
+        [NOTE] open     → tampilkan overlay di mobile
+               collapsed → aktifkan icon-only mode di desktop
+               onClose  → dipanggil Sidebar saat backdrop diklik (mobile)
+                           atau bisa dipanggil dari nav item jika diperlukan
+      ──────────────────────────────────────────────────────────────────── */}
       <Sidebar
         open={sidebarOpen}
         collapsed={collapsed}
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Top Navbar */}
-      <Navbar
-        onMenuToggle={handleMenuToggle}
-        sidebarOpen={sidebarOpen || !collapsed}
-      />
+      {/* ── Wrapper konten kanan sidebar ──────────────────────────────────── */}
 
-      {/* Main content area */}
-      <main
+      <div
         style={{
-          paddingTop: 64,
-          paddingLeft: 0,
+          paddingLeft: window.innerWidth >= 1024 ? SIDEBAR_WIDTH : 0,
           transition: "padding-left 0.3s ease",
         }}
-        className="lg:pl-[var(--sidebar-width,240px)]"
       >
-        <div
-          style={{
-            minHeight: "calc(100vh - 64px)",
-            padding: "28px 28px",
-          }}
-        >
-          <Outlet />
-        </div>
-      </main>
+
+        {/* ── Navbar ─────────────────────────────────────────────────────*/}
+        <Navbar
+          onMenuToggle={handleMenuToggle}
+          sidebarOpen={sidebarOpen}
+        />
+
+        {/* ── Main content ────────────────────────────────────────────────*/}
+        <main style={{ paddingTop: 64 }}>
+          <div style={{ minHeight: "calc(100vh - 64px)", padding: "28px" }}>
+            <Outlet />
+          </div>
+        </main>
+
+      </div>
     </div>
   );
 }
