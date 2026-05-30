@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom"; // [FIX] tambah import Link
 
 const NAV_LINKS = ["Services", "Doctors", "Products", "About", "Contact"];
+
+// [FIX] Map nav label ke tujuan yang benar.
+//       - "Products" dan "About" → route SPA (/products, /about)
+//       - Sisanya → anchor hash di dalam HomePage (#services, #doctors, #contact)
+const NAV_TARGETS = {
+  Services: { type: "hash", href: "#services" },
+  Doctors:  { type: "hash", href: "#doctors"  },
+  Products: { type: "route", to: "/products"  },
+  About:    { type: "route", to: "/about"     },
+  Contact:  { type: "hash", href: "#contact"  },
+};
 
 const SERVICES = [
   {
@@ -60,6 +72,23 @@ const STATS = [
   { value: "8 yrs", label: "Est. Experience" },
 ];
 
+// [FIX] Helper render nav link — route pakai <Link>, anchor pakai <a>
+const NavLink = ({ label, className, style, onClick }) => {
+  const target = NAV_TARGETS[label];
+  if (target.type === "route") {
+    return (
+      <Link to={target.to} className={className} style={style} onClick={onClick}>
+        {label}
+      </Link>
+    );
+  }
+  return (
+    <a href={target.href} className={className} style={style} onClick={onClick}>
+      {label}
+    </a>
+  );
+};
+
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -102,28 +131,28 @@ export default function HomePage() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
             {NAV_LINKS.map((l) => (
-              <a
+              // [FIX] Ganti <a href={`#${l.toLowerCase()}`}> dengan NavLink
+              //       yang render <Link> atau <a> sesuai NAV_TARGETS
+              <NavLink
                 key={l}
-                href={`#${l.toLowerCase()}`}
+                label={l}
                 className="text-sm tracking-wide transition-colors duration-200 hover:opacity-60"
                 style={{ color: "#5a3e35" }}
-              >
-                {l}
-              </a>
+              />
             ))}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <a href="/login" className="text-sm px-4 py-2 rounded-full transition-all duration-200 hover:bg-stone-100" style={{ color: "#5a3e35" }}>
+            <Link to="/login" className="text-sm px-4 py-2 rounded-full transition-all duration-200 hover:bg-stone-100" style={{ color: "#5a3e35" }}>
               Sign in
-            </a>
-            <a
-              href="/register"
+            </Link>
+            <Link
+              to="/login"
               className="text-sm px-5 py-2 rounded-full text-white transition-all duration-200 hover:opacity-90"
               style={{ background: "#b87c5a" }}
             >
               Book Now
-            </a>
+            </Link>
           </div>
 
           <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
@@ -135,13 +164,23 @@ export default function HomePage() {
         {menuOpen && (
           <div className="md:hidden px-6 pb-5 pt-2 flex flex-col gap-4" style={{ background: "rgba(250,248,245,0.98)" }}>
             {NAV_LINKS.map((l) => (
-              <a key={l} href={`#${l.toLowerCase()}`} className="text-sm" style={{ color: "#5a3e35" }} onClick={() => setMenuOpen(false)}>
-                {l}
-              </a>
+              // [FIX] Mobile menu — sama, pakai NavLink
+              <NavLink
+                key={l}
+                label={l}
+                className="text-sm"
+                style={{ color: "#5a3e35" }}
+                onClick={() => setMenuOpen(false)}
+              />
             ))}
-            <a href="/register" className="text-sm px-5 py-2 rounded-full text-white text-center" style={{ background: "#b87c5a" }}>
+            <Link
+              to="/login"
+              className="text-sm px-5 py-2 rounded-full text-white text-center"
+              style={{ background: "#b87c5a" }}
+              onClick={() => setMenuOpen(false)}
+            >
               Book Now
-            </a>
+            </Link>
           </div>
         )}
       </nav>
@@ -184,14 +223,14 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href="/register"
+              <Link
+                to="/login"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-white text-sm tracking-wide transition-all duration-300 hover:opacity-90 hover:-translate-y-0.5"
                 style={{ background: "linear-gradient(135deg, #c4865f, #a0613e)" }}
               >
                 Book a Consultation
                 <span>→</span>
-              </a>
+              </Link>
               <a
                 href="#services"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm tracking-wide transition-all duration-300 hover:bg-stone-50"
@@ -220,7 +259,6 @@ export default function HomePage() {
               className="relative w-80 h-96 rounded-3xl overflow-hidden"
               style={{ background: "linear-gradient(160deg, #e8c9b0, #d4a882)", boxShadow: "0 30px 80px rgba(150,80,40,0.2)" }}
             >
-              {/* Inner card decoration */}
               <div className="absolute inset-0 flex flex-col justify-between p-8">
                 <div className="flex justify-between items-start">
                   <span className="text-4xl opacity-30" style={{ color: "#7a3e22" }}>✦</span>
@@ -368,13 +406,13 @@ export default function HomePage() {
                 <h3 className="text-base font-medium mb-1" style={{ color: "#2c1f1a" }}>{d.name}</h3>
                 <p className="text-sm mb-1" style={{ color: "#b87c5a" }}>{d.spec}</p>
                 <p className="text-xs" style={{ color: "#9a6e62" }}>{d.exp} experience</p>
-                <a
-                  href="/register"
+                <Link
+                  to="/login"
                   className="mt-5 inline-block px-5 py-2 rounded-full text-xs transition-all duration-200 hover:opacity-80"
                   style={{ background: "rgba(184,124,90,0.1)", color: "#8b4c34" }}
                 >
                   Book Session
-                </a>
+                </Link>
               </div>
             ))}
           </div>
@@ -436,20 +474,20 @@ export default function HomePage() {
             Book your free first consultation today. Our doctors will analyse your skin and create a personalised treatment plan just for you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/register"
+            <Link
+              to="/login"
               className="px-8 py-4 rounded-full text-white text-sm tracking-wide transition-all duration-300 hover:opacity-90"
               style={{ background: "linear-gradient(135deg, #c4865f, #8b4c34)" }}
             >
               Book Free Consultation
-            </a>
-            <a
-              href="/login"
+            </Link>
+            <Link
+              to="/login"
               className="px-8 py-4 rounded-full text-sm tracking-wide transition-all duration-300 hover:bg-white/30"
               style={{ color: "#5a2e12", border: "1px solid rgba(90,46,18,0.3)" }}
             >
               Sign In to Account
-            </a>
+            </Link>
           </div>
         </div>
       </section>

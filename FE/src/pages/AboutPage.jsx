@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"; // [FIX] tambah import — wajib untuk navigasi SPA
+import { Link } from "react-router-dom";
 
 // ── Data ───────────────────────────────────────────────────────────────────
 const VALUES = [
@@ -98,6 +98,15 @@ export default function AboutPage() {
             <p className="text-sm leading-relaxed max-w-md" style={{ color: "#6b4c40" }}>
               We combine the rigour of clinical dermatology with a warm, welcoming environment. From your first consultation to your final treatment, every step is guided by science and care.
             </p>
+            <div className="mt-8">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs tracking-wide transition-all duration-200 hover:opacity-80"
+                style={{ color: "#5a3e35", border: "1px solid rgba(90,62,53,0.25)" }}
+              >
+                ← Back to Home
+              </Link>
+            </div>
           </div>
 
           {/* Stats card */}

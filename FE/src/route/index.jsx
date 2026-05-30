@@ -12,7 +12,7 @@ import MainLayout from "../components/layout/MainLayout";
 //        bisa di-eager import — tapi lazy dulu sampai ada masalah performa nyata.
 
 // Public
-const HomePage     = lazy(() => import("../pages/auth/HomePage"));
+const HomePage     = lazy(() => import("../pages/HomePage"));
 const AboutPage    = lazy(() => import("../pages/AboutPage"));
 const ProductsPage = lazy(() => import("../pages/ProductsPage"));
 
