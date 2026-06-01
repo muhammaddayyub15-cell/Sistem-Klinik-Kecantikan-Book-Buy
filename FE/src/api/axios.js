@@ -1,60 +1,42 @@
 import axios from "axios";
 
-// ─── Konstanta ────────────────────────────────────────────────────────────
-// [NOTE] Ganti VITE_API_URL di .env sesuai environment.
-//        Contoh: VITE_API_URL=http://localhost:3000/api
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
-
-// Storage key harus sama dengan yang dipakai di AuthContext.
-// [NOTE] Jika key diubah di AuthContext, update juga di sini.
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
 const STORAGE_KEY_TOKEN = "aura_token";
 
-// ─── Instance ─────────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  // Timeout 10 detik. Naikkan jika ada endpoint yang lambat (misal upload file).
-  timeout: 10_000,
+  headers: { "Content-Type": "application/json" },
+  timeout: 15000,
 });
 
-// ─── Request Interceptor ──────────────────────────────────────────────────
-// Otomatis sisipkan Bearer token dari localStorage ke setiap request.
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem(STORAGE_KEY_TOKEN);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Helper
+export const getToken = () => localStorage.getItem(STORAGE_KEY_TOKEN);
+export const setToken = (token) =>
+  localStorage.setItem(STORAGE_KEY_TOKEN, token);
+export const clearAuth = () => {
+  localStorage.removeItem(STORAGE_KEY_TOKEN);
+  localStorage.removeItem("aura_user");
+};
 
-// ─── Response Interceptor ─────────────────────────────────────────────────
+// Request
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Response
 api.interceptors.response.use(
-  // Success: teruskan response tanpa modifikasi.
-  (response) => response,
-
+  (res) => res,
   (error) => {
-    // [NOTE] 401 = token expired atau tidak valid.
-    //        Jika menerima 401, hapus session karena kemungkinan sudah tidak valid.
     if (error.response?.status === 401) {
-      localStorage.removeItem(STORAGE_KEY_TOKEN);
-      localStorage.removeItem("aura_user");
+      clearAuth();
+      window.dispatchEvent(new Event("unauthorized"));
     }
 
-    // Normalisasi pesan error agar konsisten di seluruh app.
-
-    const message =
-      error.response?.data?.message ??
-      error.message ??
+    error.normalizedMessage =
+      error.response?.data?.message ||
       "Terjadi kesalahan. Silakan coba lagi.";
-
-    // Attach pesan error yang sudah di-normalize ke error object
-    // agar mudah diakses di hooks: catch (err) { err.normalizedMessage }
-    error.normalizedMessage = message;
 
     return Promise.reject(error);
   }

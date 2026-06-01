@@ -20,10 +20,18 @@ class BookingService extends BaseService
     /**
      * Mendapatkan semua booking beserta relasi terkait (patient, doctor, doctorSchedule, service).
      */
-    public function getAllWithRelations(): Collection
-    {
-        return $this->bookingRepository->allWithRelations();
-    }
+    public function getAllWithRelations($user): Collection
+{
+    return match($user->role) {
+        'patient' => $user->patient
+            ? $this->bookingRepository->findByPatient($user->patient->patient_id)
+            : collect(),
+        'doctor'  => $user->doctor
+            ? $this->bookingRepository->findByDoctor($user->doctor->doctor_id)
+            : collect(),
+        default   => $this->bookingRepository->allWithRelations(), // admin
+    };
+}
 
     /**
      * Membuat booking baru dengan validasi slot jadwal dokter.
@@ -63,21 +71,5 @@ class BookingService extends BaseService
         }
 
         return $this->bookingRepository->update($id, $data);
-    }
-
-    /**
-     * Mendapatkan booking berdasarkan patient_id beserta relasi terkait.
-     */
-    public function getByPatient(int $patientId): Collection
-    {
-        return $this->bookingRepository->findByPatient($patientId);
-    }
-
-    /**
-     * Mendapatkan booking berdasarkan doctor_id beserta relasi terkait.
-     */
-    public function getByDoctor(int $doctorId): Collection
-    {
-        return $this->bookingRepository->findByDoctor($doctorId);
     }
 }

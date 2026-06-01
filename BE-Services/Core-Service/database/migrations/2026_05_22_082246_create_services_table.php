@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('services', function (Blueprint $table) {
-            $table->id();
+            $table->id('service_id');
             $table->foreignId('service_category_id')
-                  ->constrained('service_categories')
+                  ->constrained('service_categories', 'category_id')
                   ->onDelete('restrict');
             $table->string('name');
             $table->text('description')->nullable();

@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('specializations', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
+            $table->id('spec_id');
+            $table->string('spec_name')->unique();
             $table->text('description')->nullable();
             $table->timestamps();
         });

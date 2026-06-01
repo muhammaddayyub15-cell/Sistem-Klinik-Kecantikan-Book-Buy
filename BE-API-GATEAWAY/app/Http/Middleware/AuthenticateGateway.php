@@ -27,6 +27,7 @@ class AuthenticateGateway
         try {
             $coreUrl  = config('services.core_service.base_url');
             $response = Http::withToken($token)
+                ->timeout(10) // FIX: tambah timeout agar tidak hang selamanya
                 ->get("{$coreUrl}/api/auth/validate-token");
 
             if (!$response->successful()) {
@@ -36,14 +37,17 @@ class AuthenticateGateway
                 ], 401);
             }
 
-            // Inject user data ke request agar bisa dipakai controller
+            // Pakai attributes bukan merge()
+            // attributes = metadata internal Laravel, TIDAK ikut ke request body/query
+            // merge()    = masuk ke request input → ikut ke-forward ke downstream service 
             $userData = $response->json('data');
-            $request->merge(['_auth_user' => $userData]);
+            $request->attributes->set('_auth_user', $userData);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Auth service unavailable.',
+                'error'   => config('app.debug') ? $e->getMessage() : null, // debug only
             ], 503);
         }
 

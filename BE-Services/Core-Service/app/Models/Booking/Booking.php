@@ -44,26 +44,26 @@ class Booking extends Model
 
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 
     public function doctor(): BelongsTo
     {
-        return $this->belongsTo(Doctor::class, 'doctor_id', 'doctor_id');
+        return $this->belongsTo(Doctor::class, 'doctor_id', 'id');
     }
 
     public function doctorSchedule(): BelongsTo
     {
-        return $this->belongsTo(DoctorSchedule::class, 'doctsched_id', 'doctsched_id');
+        return $this->belongsTo(DoctorSchedule::class, 'doctsched_id', 'id');
     }
 
     public function service(): BelongsTo
     {
-        return $this->belongsTo(Service::class, 'service_id', 'service_id');
+        return $this->belongsTo(Service::class, 'service_id', 'id');
     }
 
     public function medicalRecord(): HasOne
     {
-        return $this->hasOne(MedicalRecord::class, 'booking_id', 'booking_id');
+        return $this->hasOne(MedicalRecord::class, 'booking_id', 'id');
     }
 }

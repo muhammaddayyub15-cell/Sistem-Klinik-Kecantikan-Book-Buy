@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('prescriptions', function (Blueprint $table) {
-            $table->id();
+            $table->id('prescription_id');
             $table->foreignId('medical_record_id')
-                  ->constrained('medical_records')
+                  ->constrained('medical_records', 'record_id')
                   ->onDelete('cascade');
             $table->unsignedBigInteger('product_id'); // snapshot, bukan FK ke Product DB
             $table->string('product_name');           // snapshot nama produk

@@ -92,18 +92,13 @@ Route::prefix('services')->group(function () {
 // Semua route booking wajib login terlebih dahulu via Sanctum
 Route::prefix('bookings')->middleware('auth:sanctum')->group(function () {
 
-    // Ambil semua booking — hanya admin dan dokter
+    // Ambil semua booking — admin (semua booking), doctor (booking miliknya saja), patient (booking miliknya saja)
     Route::get('/', [BookingController::class, 'index'])
-        ->middleware('role:admin,doctor');
-    // Buat booking baru — hanya patient dan admin
+        ->middleware('role:admin,doctor,patient');
+    // Buat booking baru — hanya pasien untuk dirinya sendiri, dan admin untuk siapa saja
     Route::post('/', [BookingController::class, 'store'])
         ->middleware('role:admin,patient');
-    // Booking berdasarkan pasien — admin dan patient
-    Route::get('/patient/{patientId}', [BookingController::class, 'getByPatient'])
-        ->middleware('role:admin,patient');
-    // Booking berdasarkan dokter — admin dan dokter
-    Route::get('/doctor/{doctorId}', [BookingController::class, 'getByDoctor'])
-        ->middleware('role:admin,doctor');
+
     // Detail satu booking — semua role boleh, ownership dicek di service
     Route::get('/{id}', [BookingController::class, 'show'])
         ->middleware('role:admin,doctor,patient');

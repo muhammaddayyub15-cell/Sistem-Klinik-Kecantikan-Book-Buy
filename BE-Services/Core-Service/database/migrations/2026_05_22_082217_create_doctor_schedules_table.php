@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('doctor_schedules', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('doctor_id')->constrained('doctors')->onDelete('cascade');
+            $table->id('schedule_id');
+            $table->foreignId('doctor_id')->constrained('doctors', 'doctor_id')->onDelete('cascade');
             $table->string('day_of_week'); // e.g. Monday, Tuesday
             $table->time('start_time');
             $table->time('end_time');

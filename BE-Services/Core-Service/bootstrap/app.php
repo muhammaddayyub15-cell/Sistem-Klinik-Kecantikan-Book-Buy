@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+
         // ModelNotFoundException → 404
         // Terjadi saat findOrFail() tidak menemukan data di repository
         $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -43,13 +44,23 @@ return Application::configure(basePath: dirname(__DIR__))
             ], 422);
         });
 
-        // Exception → dynamic status code
-        // Terjadi saat service melempar exception
-        // contoh: throw new \Exception('Pesan error.', 422);
+        // Exception → 500
+        // FIX: Sebelumnya pakai $e->getCode() sebagai HTTP status → invalid (misal 23000)
+        // Sekarang selalu return 500, log detail error untuk debugging
         $exceptions->render(function (\Exception $e) {
+            \Log::error('Unhandled Exception', [
+                'message' => $e->getMessage(),
+                'code'    => $e->getCode(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], $e->getCode() ?: 500);
+                'message' => config('app.debug')
+                    ? $e->getMessage()
+                    : 'Terjadi kesalahan pada server.',
+            ], 500);
         });
+
     })->create();

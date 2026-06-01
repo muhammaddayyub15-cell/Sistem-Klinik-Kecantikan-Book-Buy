@@ -28,7 +28,7 @@ class UserRepository extends BaseRepository
     // update kolom last_login_at setiap login berhasil
     public function updateLastLogin(int $userId): void
     {
-        $this->model->where('id', $userId)->update([
+        $this->model->where('user_id', $userId)->update([
             'last_login_at' => now(),
         ]);
     }

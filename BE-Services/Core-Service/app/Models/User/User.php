@@ -2,8 +2,8 @@
 
 namespace App\Models\User;
 
-use App\Modules\Patient\Models\Patient;
-use App\Modules\Doctor\Models\Doctor;
+use App\Models\Patient\Patient;
+use App\Models\Doctor\Doctor;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -16,6 +16,8 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
+    protected $primaryKey = 'user_id';
+
     protected $fillable = [
         'full_name',
         'email',
@@ -27,6 +29,18 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    // getAuthIdentifierName: override agar Sanctum menggunakan user_id sebagai tokenable_id
+    public function getAuthIdentifierName(): string
+    {
+        return 'user_id';
+    }
+
+    // getAuthIdentifier: override agar Sanctum membaca nilai user_id
+    public function getAuthIdentifier(): mixed
+    {
+        return $this->user_id;
+    }
 
     // casts: mengatur tipe data otomatis
     protected function casts(): array

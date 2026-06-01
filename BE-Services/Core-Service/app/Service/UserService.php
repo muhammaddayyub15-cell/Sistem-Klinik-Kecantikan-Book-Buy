@@ -1,14 +1,49 @@
 <?php
 
-namespace App\Service;
+namespace App\Shared\Base;
 
-use App\Service\Repositories\UserRepository;
-use App\Shared\Base\BaseService;
+use Illuminate\Database\Eloquent\Model;
 
-class UserService extends BaseService
+abstract class BaseRepository
 {
-    public function __construct(UserRepository $userRepository)
+    protected Model $model;
+
+    public function __construct(Model $model)
     {
-        parent::__construct($userRepository);
+        $this->model = $model;
+    }
+
+    public function all()
+    {
+        return $this->model->all();
+    }
+
+    public function find($id)
+    {
+        return $this->model->find($id);
+    }
+
+    public function findOrFail($id)
+    {
+        return $this->model->findOrFail($id);
+    }
+
+    public function create(array $attributes)
+    {
+        $model = $this->model->create($attributes);
+        return $model->fresh(); // fix: reload dari DB agar PK (user_id) ter-load
+    }
+
+    public function update($id, array $attributes)
+    {
+        $record = $this->findOrFail($id);
+        $record->update($attributes);
+        return $record->fresh(); // konsisten: pastikan data terbaru setelah update
+    }
+
+    public function delete($id)
+    {
+        $record = $this->findOrFail($id);
+        return $record->delete();
     }
 }

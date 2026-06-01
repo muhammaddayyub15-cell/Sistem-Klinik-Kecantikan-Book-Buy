@@ -10,6 +10,7 @@ use App\Shared\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
@@ -20,16 +21,15 @@ class BookingController extends Controller
 
     // Menampilkan semua data booking
     // Akses: admin (semua booking), doctor (booking miliknya saja)
-    public function index(): JsonResponse
-    {
-        try {
-            $bookings = $this->bookingService->getAllWithRelations();
-            return $this->successResponse($bookings);
-        } catch (\Exception $e) {
-            // Gagal mengambil data booking
-            return $this->errorResponse('Gagal mengambil data booking', 500);
-        }
+   public function index(Request $request): JsonResponse
+{
+    try {
+        $bookings = $this->bookingService->getAllWithRelations($request->user());
+        return $this->successResponse($bookings);
+    } catch (\Exception $e) {
+        return $this->errorResponse('Gagal mengambil data booking', 500);
     }
+}
 
     // Membuat booking baru
     // Akses: patient (booking untuk dirinya sendiri), admin

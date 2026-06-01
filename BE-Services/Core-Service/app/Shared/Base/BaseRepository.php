@@ -30,14 +30,15 @@ abstract class BaseRepository
 
     public function create(array $attributes)
     {
-        return $this->model->create($attributes);
+        $model = $this->model->create($attributes);
+        return $model->fresh(); // fix: reload dari DB agar PK (user_id) ter-load
     }
 
     public function update($id, array $attributes)
     {
         $record = $this->findOrFail($id);
         $record->update($attributes);
-        return $record;
+        return $record->fresh(); // konsisten: pastikan data terbaru setelah update
     }
 
     public function delete($id)

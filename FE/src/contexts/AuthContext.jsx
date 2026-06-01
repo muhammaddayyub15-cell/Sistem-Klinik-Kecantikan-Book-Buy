@@ -1,56 +1,46 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { login as apiLogin, register as apiRegister, logout as apiLogout, refreshToken as apiRefreshToken } from "../api/authApi";
+import { login as apiLogin, register as apiRegister, logout as apiLogout, getMe } from "../api/authApi";
+
+// [FIX] apiRefreshToken dihapus — Sanctum token-based tidak punya endpoint refresh.
 
 const AuthContext = createContext(null);
 
-// ─── Storage keys ─────────────────────────────────────────────────────────
-// Konstanta agar tidak ada typo jika key perlu diubah di masa depan.
 const STORAGE_KEY_TOKEN = "aura_token";
 const STORAGE_KEY_USER  = "aura_user";
-
-// ─── Provider ─────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }) {
   const [user,      setUser]      = useState(null);
   const [token,     setToken]     = useState(null);
-
-
-  //        Tanpa ini, user yang refresh halaman akan selalu di-kick ke /login.
   const [isLoading, setIsLoading] = useState(true);
 
   // ── Inisialisasi: restore session dari localStorage ──────────────────────
+  // [FIX] Tidak lagi async + tidak panggil apiRefreshToken.
+  // Sanctum token valid sampai di-revoke oleh backend (logout).
+  // Validasi token dilakukan implisit: jika 401, interceptor axios
+  // akan clear storage dan redirect ke /login secara otomatis.
   useEffect(() => {
-    const restore = async () => {
-      try {
-        const storedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
-        const storedUser  = localStorage.getItem(STORAGE_KEY_USER);
+    try {
+      const storedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+      const storedUser  = localStorage.getItem(STORAGE_KEY_USER);
 
-        if (storedToken && storedUser) {
-          // [NOTE] Coba refresh token untuk memastikan session masih valid.
-          //        Jika endpoint /auth/refresh tidak ada, hapus blok try-catch
-          //        ini dan langsung set dari storage (less secure tapi lebih simple).
-          try {
-            const res = await apiRefreshToken(storedToken);
-            const freshToken = res.data?.token ?? storedToken;
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        getMe().catch(() => {
+          localStorage.removeItem(STORAGE_KEY_TOKEN);
+          localStorage.removeItem(STORAGE_KEY_USER);
+          setUser(null);
+          setToken(null);
+        });
 
-            setToken(freshToken);
-            setUser(JSON.parse(storedUser));
-            localStorage.setItem(STORAGE_KEY_TOKEN, freshToken);
-          } catch {
-            // [NOTE] Refresh gagal (token expired) → bersihkan storage.
-            //        User akan diarahkan ke /login oleh ProtectedRoute.
-            clearStorage();
-          }
-        }
-      } catch (err) {
-        console.error("[AuthContext] Failed to restore session:", err);
-        clearStorage();
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    restore();
+    } catch (err) {
+      console.error("[AuthContext] Failed to restore session:", err);
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_USER);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   // ── Helper: simpan ke state + localStorage ───────────────────────────────
@@ -61,24 +51,23 @@ export function AuthProvider({ children }) {
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(userData));
   }, []);
 
-  // ── Helper: hapus session ────────────────────────────────────────────────
-  const clearStorage = () => {
-    localStorage.removeItem(STORAGE_KEY_TOKEN);
-    localStorage.removeItem(STORAGE_KEY_USER);
-  };
-
   // ── login ────────────────────────────────────────────────────────────────
+  // [FIX] Return userData agar LoginPage bisa baca .role untuk redirect.
+  // LoginPage cukup: const userData = await login(email, password)
   const login = useCallback(async (email, password) => {
     const res = await apiLogin({ email, password });
     const { user: userData, token: tokenValue } = res.data;
     persistSession(userData, tokenValue);
+    return userData;
   }, [persistSession]);
 
   // ── register ─────────────────────────────────────────────────────────────
+  // [FIX] Return userData agar RegisterPage bisa baca .role untuk redirect.
   const register = useCallback(async (data) => {
     const res = await apiRegister(data);
     const { user: userData, token: tokenValue } = res.data;
     persistSession(userData, tokenValue);
+    return userData;
   }, [persistSession]);
 
   // ── logout ───────────────────────────────────────────────────────────────
@@ -86,23 +75,20 @@ export function AuthProvider({ children }) {
     try {
       await apiLogout();
     } catch {
-        // [NOTE] Logout API gagal (misal karena token expired) → tetap bersihkan session.
+      // Token sudah expired di server — tetap bersihkan session di client.
     } finally {
       setUser(null);
       setToken(null);
-      clearStorage();
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_USER);
     }
   }, []);
 
-  // ── Nilai yang di-expose ke consumers ────────────────────────────────────
   const value = {
     user,
     token,
-
     isAuthenticated: !!user && !!token,
-
     isLoading,
-
     login,
     register,
     logout,
@@ -115,8 +101,6 @@ export function AuthProvider({ children }) {
   );
 }
 
-// ─── Custom hook ──────────────────────────────────────────────────────────
-// Custom hook untuk akses context dengan lebih nyaman di komponen lain.
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) {

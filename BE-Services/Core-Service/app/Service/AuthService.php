@@ -2,14 +2,14 @@
 
 namespace App\Service;
 
+use App\Models\Patient\Patient;
 use App\Service\Repositories\UserRepository;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-    // AuthService tidak extends BaseService karena flow auth (login/logout/token)
-
     protected UserRepository $userRepository;
 
     public function __construct(UserRepository $userRepository)
@@ -17,22 +17,38 @@ class AuthService
         $this->userRepository = $userRepository;
     }
 
-    // register: membuat user baru + hash password + generate token langsung
     public function register(array $data): array
     {
-        $data['password'] = Hash::make($data['password']);
+        return DB::transaction(function () use ($data) {
 
-        $user  = $this->userRepository->create($data);
-        $token = $user->createToken('auth_token')->plainTextToken;
+            $payload = [
+                'full_name' => $data['full_name'],
+                'email'     => $data['email'],
+                'password'  => Hash::make($data['password']),
+                'role'      => 'patient',
+            ];
 
-        return [
-            'user'  => $user,
-            'token' => $token,
-        ];
+            $user = $this->userRepository->create($payload);
+            // fresh() sudah dipanggil di BaseRepository::create()
+            // sehingga $user->user_id dijamin tidak null di sini
+
+            Patient::create([
+                'user_id'       => $user->user_id,
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'gender'        => $data['gender'] ?? null,
+                'blood_type'    => $data['blood_type'] ?? null,
+                'address'       => $data['address'] ?? null,
+            ]);
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return [
+                'user'  => $user,
+                'token' => $token,
+            ];
+        });
     }
 
-    // login: validasi credential secara manual (stateless API, tidak pakai session)
-    // Auth::attempt() tidak dipakai karena menggunakan session driver
     public function login(array $credentials): array
     {
         $user = $this->userRepository->findByEmail($credentials['email']);
@@ -43,15 +59,14 @@ class AuthService
             ]);
         }
 
-        // pastikan akun aktif sebelum login
         if ($user->status !== 'active') {
             throw ValidationException::withMessages([
                 'email' => ['Akun Anda tidak aktif. Hubungi administrator.'],
             ]);
         }
 
-        // update last_login_at setiap login berhasil
-        $this->userRepository->updateLastLogin($user->id);
+        $this->userRepository->updateLastLogin($user->user_id);
+        // user_id dijamin tidak null karena findByEmail query langsung dari DB
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -61,7 +76,6 @@ class AuthService
         ];
     }
 
-    // logout: revoke hanya token yang sedang dipakai
     public function logout($user): void
     {
         if ($user && $user->currentAccessToken()) {

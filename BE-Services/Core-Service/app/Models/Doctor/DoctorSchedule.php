@@ -10,13 +10,14 @@ class DoctorSchedule extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'doctsched_id';
+    protected $table = 'doctor_schedules';
 
     protected $fillable = [
         'doctor_id',
-        'day',
+        'day_of_week',
         'start_time',
         'end_time',
+        'is_active',
     ];
 
     protected function casts(): array
@@ -24,6 +25,7 @@ class DoctorSchedule extends Model
         return [
             'start_time' => 'datetime:H:i',
             'end_time'   => 'datetime:H:i',
+            'is_active'  => 'boolean',
         ];
     }
 

@@ -9,18 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bookings', function (Blueprint $table) {
-            $table->id();
+            $table->id('booking_id');
             $table->foreignId('patient_id')
-                  ->constrained('patients')
+                  ->constrained('patients', 'patient_id')
                   ->onDelete('restrict');
             $table->foreignId('doctor_id')
-                  ->constrained('doctors')
+                  ->constrained('doctors', 'doctor_id')
                   ->onDelete('restrict');
             $table->foreignId('doctor_schedule_id')
-                  ->constrained('doctor_schedules')
+                  ->constrained('doctor_schedules', 'schedule_id')
                   ->onDelete('restrict');
             $table->foreignId('service_id')
-                  ->constrained('services')
+                  ->constrained('services', 'service_id')
                   ->onDelete('restrict');
             $table->date('booked_date');
             $table->time('start_time');

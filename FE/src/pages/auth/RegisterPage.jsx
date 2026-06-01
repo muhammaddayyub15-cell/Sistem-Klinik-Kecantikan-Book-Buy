@@ -1,14 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { register } from "../../api/authApi";
-
-/**
- * RegisterPage — 3-step registration flow:
- *   Step 1: Choose role (patient / doctor)
- *   Step 2: Personal information
- *   Step 3: Account credentials + submit
- */
 
 const STEPS = ["Role", "Details", "Account"];
 
@@ -16,7 +8,7 @@ const ROLES = [
   {
     value: "patient",
     icon: (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
         <circle cx="12" cy="7" r="4" />
       </svg>
@@ -27,7 +19,7 @@ const ROLES = [
   {
     value: "doctor",
     icon: (
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
         <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
         <path d="M12 13v4M10 15h4" />
       </svg>
@@ -37,65 +29,92 @@ const ROLES = [
   },
 ];
 
-export default function RegisterPage() {
-  const { login: setAuth } = useAuth();
+const REDIRECT = {
+  patient: "/patient/dashboard",
+  doctor: "/doctor/dashboard",
+};
+
+const SPECIALIZATIONS = [
+  { value: "aesthetic_dermatology", label: "Aesthetic Dermatology" },
+  { value: "laser_skin",            label: "Laser & Skin Expert" },
+  { value: "cosmetic_physician",    label: "Cosmetic Physician" },
+  { value: "general_skin",          label: "General Skincare" },
+];
+
+const inputCls =
+  "w-full px-4 py-3 rounded-xl border border-[#e8d5c8] bg-[#fdf8f5] text-[#2c1f1a] text-sm placeholder-[#c4a898] outline-none transition-all duration-200 focus:border-[#b87c5a] focus:bg-white focus:shadow-sm";
+const labelCls = "block text-xs font-medium text-[#5a3e35] mb-1.5 tracking-wide";
+const selectCls = `${inputCls} cursor-pointer`;
+
+const getPasswordStrength = (pw) => {
+  if (!pw) return 0;
+  if (pw.length < 8) return 1;
+  if (pw.length < 10) return 2;
+  if (/[A-Z]/.test(pw) && /[0-9]/.test(pw)) return 4;
+  return 3;
+};
+
+const STRENGTH_LABEL  = ["", "Too short", "Weak", "Good", "Strong ✓"];
+const STRENGTH_COLORS = ["", "bg-red-400", "bg-orange-400", "bg-yellow-500", "bg-emerald-500"];
+
+const EyeIcon = ({ open }) =>
+  open ? (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  ) : (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+
+function RegisterPage() {
+  const { register } = useAuth();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [focused, setFocused] = useState("");
-  const [showPass, setShowPass] = useState(false);
+  const [step, setStep]               = useState(0);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
+  const [showPass, setShowPass]       = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [form, setForm] = useState({
-    role: "",
-    name: "",
-    phone: "",
-    date_of_birth: "",
-    gender: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    role: "", name: "", phone: "", date_of_birth: "",
+    gender: "", specialization: "", email: "",
+    password: "", confirmPassword: "",
   });
 
-  const set = (key, val) => {
-    setForm((p) => ({ ...p, [key]: val }));
+  const strength = getPasswordStrength(form.password);
+
+  const setField = (key, val) => {
+    setForm((prev) => ({ ...prev, [key]: val }));
     if (error) setError("");
   };
 
-  const REDIRECT = { patient: "/patient/dashboard", doctor: "/doctor/dashboard" };
-
-  // ── Validation per step ──
   const validateStep = () => {
     if (step === 0) {
-      if (!form.role) { setError("Please select your role."); return false; }
+      if (!form.role)          { setError("Please select your role.");        return false; }
     }
     if (step === 1) {
-      if (!form.name.trim()) { setError("Full name is required."); return false; }
-      if (!form.phone.trim()) { setError("Phone number is required."); return false; }
-      if (!form.date_of_birth) { setError("Date of birth is required."); return false; }
-      if (!form.gender) { setError("Gender is required."); return false; }
+      if (!form.name.trim())   { setError("Full name is required.");          return false; }
+      if (!form.phone.trim())  { setError("Phone number is required.");       return false; }
+      if (!form.date_of_birth) { setError("Date of birth is required.");      return false; }
+      if (!form.gender)        { setError("Gender is required.");             return false; }
     }
     if (step === 2) {
-      if (!form.email.trim()) { setError("Email is required."); return false; }
-      if (!/\S+@\S+\.\S+/.test(form.email)) { setError("Enter a valid email address."); return false; }
-      if (form.password.length < 8) { setError("Password must be at least 8 characters."); return false; }
-      if (form.password !== form.confirmPassword) { setError("Passwords do not match."); return false; }
+      if (!form.email.trim())                         { setError("Email is required.");                       return false; }
+      if (!/\S+@\S+\.\S+/.test(form.email))           { setError("Enter a valid email address.");             return false; }
+      if (form.password.length < 8)                   { setError("Password must be at least 8 characters."); return false; }
+      if (form.password !== form.confirmPassword)     { setError("Passwords do not match.");                  return false; }
     }
     setError("");
     return true;
   };
 
-  const handleNext = () => {
-    if (!validateStep()) return;
-    setStep((s) => s + 1);
-  };
-
-  const handleBack = () => {
-    setError("");
-    setStep((s) => s - 1);
-  };
+  const handleNext = () => { if (!validateStep()) return; setStep((s) => s + 1); };
+  const handleBack = () => { setError(""); setStep((s) => s - 1); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -103,9 +122,8 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const { confirmPassword, ...payload } = form;
-      const res = await register(payload);
-      setAuth(res.data);
-      navigate(REDIRECT[res.data.user.role] ?? "/");
+      const userData = await register(payload);
+      navigate(REDIRECT[userData.role] ?? "/", { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message ?? "Registration failed. Please try again.");
     } finally {
@@ -113,591 +131,320 @@ export default function RegisterPage() {
     }
   };
 
-  // ── Shared input style ──
-  const inputStyle = (name) => ({
-    width: "100%",
-    padding: "13px 16px",
-    borderRadius: 12,
-    border: focused === name ? "1.5px solid #b87c5a" : "1.5px solid rgba(184,124,90,0.2)",
-    background: focused === name ? "#fff" : "rgba(253,246,239,0.6)",
-    fontSize: 14,
-    color: "#2c1f1a",
-    outline: "none",
-    transition: "all 0.2s ease",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  });
-
-  const labelStyle = {
-    display: "block",
-    fontSize: 12,
-    fontWeight: 500,
-    color: "#5a3e35",
-    marginBottom: 7,
-    letterSpacing: "0.03em",
-  };
-
-  // ── Step content ──
-  const StepContent = () => {
-    if (step === 0) return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <p style={{ fontSize: 13, color: "#7a5a52", marginBottom: 4 }}>
-          This helps us personalise your experience.
-        </p>
-        {ROLES.map((r) => (
-          <button
-            key={r.value}
-            type="button"
-            onClick={() => set("role", r.value)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              padding: "18px 20px",
-              borderRadius: 14,
-              border: form.role === r.value
-                ? "1.5px solid #b87c5a"
-                : "1.5px solid rgba(184,124,90,0.2)",
-              background: form.role === r.value
-                ? "rgba(184,124,90,0.07)"
-                : "rgba(253,246,239,0.4)",
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "all 0.2s ease",
-              width: "100%",
-              fontFamily: "inherit",
-            }}
-          >
-            <div
-              style={{
-                width: 52,
-                height: 52,
-                borderRadius: 14,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: form.role === r.value
-                  ? "rgba(184,124,90,0.15)"
-                  : "rgba(184,124,90,0.07)",
-                color: form.role === r.value ? "#b87c5a" : "#9a7065",
-                flexShrink: 0,
-                transition: "all 0.2s",
-              }}
-            >
-              {r.icon}
-            </div>
-            <div>
-              <p style={{
-                fontSize: 15, fontWeight: 500, margin: "0 0 4px",
-                color: form.role === r.value ? "#2c1f1a" : "#5a3e35",
-              }}>
-                {r.label}
-              </p>
-              <p style={{ fontSize: 12.5, color: "#9a7065", margin: 0, lineHeight: 1.5 }}>
-                {r.desc}
-              </p>
-            </div>
-            {form.role === r.value && (
-              <div style={{ marginLeft: "auto", flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b87c5a" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
-    );
-
-    if (step === 1) return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {/* Full name */}
-        <div>
-          <label style={labelStyle}>Full name</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
-            onFocus={() => setFocused("name")}
-            onBlur={() => setFocused("")}
-            placeholder="e.g. Sari Dewi"
-            style={inputStyle("name")}
-          />
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label style={labelStyle}>Phone number</label>
-          <input
-            type="tel"
-            value={form.phone}
-            onChange={(e) => set("phone", e.target.value)}
-            onFocus={() => setFocused("phone")}
-            onBlur={() => setFocused("")}
-            placeholder="+62 812 3456 7890"
-            style={inputStyle("phone")}
-          />
-        </div>
-
-        {/* DOB + Gender row */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Date of birth</label>
-            <input
-              type="date"
-              value={form.date_of_birth}
-              onChange={(e) => set("date_of_birth", e.target.value)}
-              onFocus={() => setFocused("dob")}
-              onBlur={() => setFocused("")}
-              style={inputStyle("dob")}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Gender</label>
-            <select
-              value={form.gender}
-              onChange={(e) => set("gender", e.target.value)}
-              onFocus={() => setFocused("gender")}
-              onBlur={() => setFocused("")}
-              style={{ ...inputStyle("gender"), cursor: "pointer" }}
-            >
-              <option value="">Select</option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Doctor-only: specialization */}
-        {form.role === "doctor" && (
-          <div>
-            <label style={labelStyle}>Specialization</label>
-            <select
-              value={form.specialization ?? ""}
-              onChange={(e) => set("specialization", e.target.value)}
-              onFocus={() => setFocused("spec")}
-              onBlur={() => setFocused("")}
-              style={{ ...inputStyle("spec"), cursor: "pointer" }}
-            >
-              <option value="">Select specialization</option>
-              <option value="aesthetic_dermatology">Aesthetic Dermatology</option>
-              <option value="laser_skin">Laser & Skin Expert</option>
-              <option value="cosmetic_physician">Cosmetic Physician</option>
-              <option value="general_skin">General Skincare</option>
-            </select>
-          </div>
-        )}
-      </div>
-    );
-
-    if (step === 2) return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {/* Email */}
-        <div>
-          <label style={labelStyle}>Email address</label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => set("email", e.target.value)}
-            onFocus={() => setFocused("email")}
-            onBlur={() => setFocused("")}
-            placeholder="you@example.com"
-            autoComplete="email"
-            style={inputStyle("email")}
-          />
-        </div>
-
-        {/* Password */}
-        <div>
-          <label style={labelStyle}>Password</label>
-          <div style={{ position: "relative" }}>
-            <input
-              type={showPass ? "text" : "password"}
-              value={form.password}
-              onChange={(e) => set("password", e.target.value)}
-              onFocus={() => setFocused("password")}
-              onBlur={() => setFocused("")}
-              placeholder="Min. 8 characters"
-              autoComplete="new-password"
-              style={{ ...inputStyle("password"), paddingRight: 46 }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPass(!showPass)}
-              style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#b0907e", display: "flex" }}
-              aria-label={showPass ? "Hide password" : "Show password"}
-            >
-              {showPass ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* Password strength */}
-          {form.password && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-                {[1, 2, 3, 4].map((lvl) => {
-                  const strength = form.password.length < 8 ? 1
-                    : form.password.length < 10 ? 2
-                    : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password) ? 4 : 3;
-                  return (
-                    <div
-                      key={lvl}
-                      style={{
-                        flex: 1,
-                        height: 3,
-                        borderRadius: 4,
-                        background: lvl <= strength
-                          ? strength === 1 ? "#b04040"
-                          : strength === 2 ? "#d4874e"
-                          : strength === 3 ? "#9a7e14"
-                          : "#3a7a5a"
-                          : "rgba(184,124,90,0.15)",
-                        transition: "background 0.3s",
-                      }}
-                    />
-                  );
-                })}
-              </div>
-              <p style={{ fontSize: 11, color: "#9a7065" }}>
-                {form.password.length < 8 ? "Too short"
-                  : form.password.length < 10 ? "Weak — try adding more characters"
-                  : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password) ? "Strong password ✓"
-                  : "Good — add uppercase & numbers for stronger security"}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Confirm password */}
-        <div>
-          <label style={labelStyle}>Confirm password</label>
-          <div style={{ position: "relative" }}>
-            <input
-              type={showConfirm ? "text" : "password"}
-              value={form.confirmPassword}
-              onChange={(e) => set("confirmPassword", e.target.value)}
-              onFocus={() => setFocused("confirm")}
-              onBlur={() => setFocused("")}
-              placeholder="Re-enter your password"
-              autoComplete="new-password"
-              style={{
-                ...inputStyle("confirm"),
-                paddingRight: 46,
-                border: form.confirmPassword && form.confirmPassword !== form.password
-                  ? "1.5px solid rgba(176,64,64,0.4)"
-                  : form.confirmPassword && form.confirmPassword === form.password
-                  ? "1.5px solid rgba(58,122,90,0.4)"
-                  : inputStyle("confirm").border,
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm(!showConfirm)}
-              style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#b0907e", display: "flex" }}
-            >
-              {showConfirm ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Terms */}
-        <p style={{ fontSize: 12, color: "#9a7065", lineHeight: 1.6 }}>
-          By creating an account, you agree to our{" "}
-          <a href="/terms" style={{ color: "#b87c5a", textDecoration: "none" }}>Terms of Service</a>
-          {" "}and{" "}
-          <a href="/privacy" style={{ color: "#b87c5a", textDecoration: "none" }}>Privacy Policy</a>.
-        </p>
-      </div>
-    );
-  };
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        fontFamily: "'DM Sans', sans-serif",
-        background: "#faf8f5",
-      }}
-    >
-      {/* ── LEFT PANEL ── */}
-      <div
-        className="hidden lg:flex"
-        style={{
-          width: "42%",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "48px",
-          background: "linear-gradient(160deg, #2c1208 0%, #5a2e12 50%, #8b4c34 100%)",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Ornament rings */}
-        <div style={{ position: "absolute", top: -100, right: -100, width: 360, height: 360, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.06)" }} />
-        <div style={{ position: "absolute", top: -60, right: -60, width: 260, height: 260, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.04)" }} />
-        <div style={{ position: "absolute", bottom: -80, left: -80, width: 280, height: 280, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.05)" }} />
-
-        {/* Glow dot */}
-        <div style={{ position: "absolute", top: "30%", left: "60%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(184,124,90,0.2) 0%, transparent 70%)" }} />
-
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative", zIndex: 1 }}>
-          <span style={{ fontSize: 22, color: "#e8c9b0" }}>✦</span>
-          <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 20, fontWeight: 500, color: "#f5ede4" }}>
-            Aura Clinic
-          </span>
-        </div>
-
-        {/* Steps visual */}
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(232,201,176,0.6)", marginBottom: 32 }}>
-            Registration steps
-          </p>
-
-          {STEPS.map((s, i) => {
-            const done = i < step;
-            const active = i === step;
-            return (
-              <div key={s} style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: i < STEPS.length - 1 ? 0 : 0 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: done ? "#b87c5a" : active ? "rgba(184,124,90,0.2)" : "rgba(255,255,255,0.06)",
-                      border: active ? "1.5px solid #b87c5a" : done ? "none" : "1.5px solid rgba(255,255,255,0.1)",
-                      transition: "all 0.3s",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {done ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <span style={{ fontSize: 12, fontWeight: 500, color: active ? "#e8c9b0" : "rgba(255,255,255,0.3)" }}>
-                        {i + 1}
-                      </span>
-                    )}
-                  </div>
-                  {i < STEPS.length - 1 && (
-                    <div
-                      style={{
-                        width: 1,
-                        height: 36,
-                        background: done ? "#b87c5a" : "rgba(255,255,255,0.08)",
-                        transition: "background 0.4s",
-                        margin: "4px 0",
-                      }}
-                    />
-                  )}
-                </div>
-                <div style={{ paddingTop: 6 }}>
-                  <p style={{
-                    fontSize: 14,
-                    fontWeight: active ? 500 : 400,
-                    color: active ? "#e8c9b0" : done ? "rgba(232,201,176,0.8)" : "rgba(255,255,255,0.3)",
-                    margin: 0,
-                    transition: "color 0.3s",
-                  }}>
-                    {s}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Bottom quote */}
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <p style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 20, color: "rgba(232,201,176,0.7)", fontStyle: "italic", lineHeight: 1.5, margin: 0 }}>
-            "Your skin tells your story. Let us help you write a beautiful one."
-          </p>
-        </div>
-      </div>
-
-      {/* ── RIGHT PANEL — form ── */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px 24px",
-        }}
-      >
-        <div style={{ width: "100%", maxWidth: 420 }}>
-
-          {/* Mobile logo */}
-          <div className="flex lg:hidden" style={{ alignItems: "center", gap: 8, marginBottom: 32 }}>
-            <span style={{ fontSize: 18, color: "#b87c5a" }}>✦</span>
-            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 18, color: "#2c1f1a" }}>Aura Clinic</span>
-          </div>
-
-          {/* Mobile step dots */}
-          <div className="flex lg:hidden" style={{ gap: 8, marginBottom: 24 }}>
-            {STEPS.map((_, i) => (
-              <div key={i} style={{
-                height: 4, borderRadius: 4,
-                width: i === step ? 24 : 8,
-                background: i <= step ? "#b87c5a" : "rgba(184,124,90,0.2)",
-                transition: "all 0.3s",
-              }} />
-            ))}
-          </div>
-
-          {/* Step header */}
-          <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b87c5a", marginBottom: 8 }}>
-              Step {step + 1} of {STEPS.length}
-            </p>
-            <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 30, fontWeight: 400, color: "#2c1f1a", margin: 0, lineHeight: 1.2 }}>
-              {step === 0 && <>I am a…</>}
-              {step === 1 && <>Tell us about<br /><em style={{ color: "#b87c5a" }}>yourself</em></>}
-              {step === 2 && <>Create your<br /><em style={{ color: "#b87c5a" }}>account</em></>}
-            </h1>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div style={{
-              padding: "12px 16px", borderRadius: 10, background: "rgba(176,64,64,0.08)",
-              border: "1px solid rgba(176,64,64,0.2)", color: "#b04040", fontSize: 13,
-              marginBottom: 20, display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              {error}
-            </div>
-          )}
-
-          {/* Dynamic step content */}
-          <form onSubmit={step === 2 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
-            <StepContent />
-
-            {/* Navigation buttons */}
-            <div style={{ display: "flex", gap: 10, marginTop: 28 }}>
-              {step > 0 && (
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  style={{
-                    padding: "13px 20px",
-                    borderRadius: 12,
-                    border: "1.5px solid rgba(184,124,90,0.25)",
-                    background: "transparent",
-                    color: "#5a3e35",
-                    fontSize: 14,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                  </svg>
-                  Back
-                </button>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  flex: 1,
-                  padding: "13px",
-                  borderRadius: 12,
-                  border: "none",
-                  background: loading ? "rgba(184,124,90,0.5)" : "linear-gradient(135deg, #c4865f, #9a5030)",
-                  color: "#fff",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  transition: "all 0.25s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  fontFamily: "inherit",
-                }}
-              >
-                {loading ? (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 0.8s linear infinite" }}>
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                    </svg>
-                    Creating account…
-                  </>
-                ) : step < 2 ? (
-                  <>Continue <span style={{ fontSize: 16 }}>→</span></>
-                ) : (
-                  <>Create Account <span style={{ fontSize: 16 }}>→</span></>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Divider + login link */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "24px 0 16px" }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(184,124,90,0.15)" }} />
-            <span style={{ fontSize: 12, color: "#b0907e" }}>or</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(184,124,90,0.15)" }} />
-          </div>
-
-          <p style={{ textAlign: "center", fontSize: 13, color: "#7a5a52" }}>
-            Already have an account?{" "}
-            <Link to="/login" style={{ color: "#b87c5a", fontWeight: 500, textDecoration: "none" }}>
-              Sign in →
-            </Link>
-          </p>
-
-          <div style={{ textAlign: "center", marginTop: 28 }}>
-            <Link to="/" style={{ fontSize: 12, color: "#b0907e", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Back to homepage
-            </Link>
-          </div>
-        </div>
-      </div>
-
+    <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap');
         @keyframes spin { to { transform: rotate(360deg); } }
-        input::placeholder { color: #c4a898; }
-        select option { background: #faf8f5; color: #2c1f1a; }
+        .spin { animation: spin 0.8s linear infinite; }
       `}</style>
-    </div>
+
+      <div className="min-h-screen flex font-sans bg-[#faf8f5]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+
+        {/* LEFT PANEL */}
+        <div
+          className="hidden lg:flex w-[42%] flex-col justify-between p-12 relative overflow-hidden"
+          style={{ background: "linear-gradient(160deg, #2c1208 0%, #5a2e12 50%, #8b4c34 100%)" }}
+        >
+          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full border border-white/5" />
+          <div className="absolute -top-12 -right-12 w-56 h-56 rounded-full border border-white/[0.04]" />
+          <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full border border-white/[0.05]" />
+          <div className="absolute top-[30%] left-[60%] w-48 h-48 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(184,124,90,0.2) 0%, transparent 70%)" }} />
+
+          <div className="flex items-center gap-2.5 relative z-10">
+            <span className="text-[#e8c9b0] text-2xl">✦</span>
+            <span className="text-[#f5ede4] text-xl font-medium" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Aura Clinic
+            </span>
+          </div>
+
+          <div className="relative z-10">
+            <p className="text-[10px] tracking-[0.12em] uppercase text-[rgba(232,201,176,0.6)] mb-8">
+              Registration steps
+            </p>
+            {STEPS.map((s, i) => {
+              const done   = i < step;
+              const active = i === step;
+              return (
+                <div key={s} className="flex items-start gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300
+                      ${done   ? "bg-[#b87c5a] border-0"
+                      : active ? "bg-[rgba(184,124,90,0.2)] border border-[#b87c5a]"
+                               : "bg-[rgba(255,255,255,0.06)] border border-white/10"}`}
+                    >
+                      {done ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : (
+                        <span className={`text-xs font-medium ${active ? "text-[#e8c9b0]" : "text-white/30"}`}>{i + 1}</span>
+                      )}
+                    </div>
+                    {i < STEPS.length - 1 && (
+                      <div className={`w-px h-9 my-1 transition-all duration-500 ${done ? "bg-[#b87c5a]" : "bg-white/[0.08]"}`} />
+                    )}
+                  </div>
+                  <div className="pt-1.5">
+                    <p className={`text-sm transition-all duration-300
+                      ${active ? "font-medium text-[#e8c9b0]" : done ? "text-[rgba(232,201,176,0.8)]" : "text-white/30"}`}>
+                      {s}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="relative z-10">
+            <p className="text-xl italic text-[rgba(232,201,176,0.7)] leading-relaxed"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              "Your skin tells your story.<br />Let us help you write a beautiful one."
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL */}
+        <div className="flex-1 flex items-center justify-center px-5 py-10 sm:px-8 md:px-12">
+          <div className="w-full max-w-md">
+
+            {/* Mobile logo */}
+            <div className="flex lg:hidden items-center gap-2 mb-8">
+              <span className="text-[#b87c5a] text-lg">✦</span>
+              <span className="text-[#2c1f1a] text-lg" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                Aura Clinic
+              </span>
+            </div>
+
+            {/* Mobile step dots */}
+            <div className="flex lg:hidden gap-2 mb-6">
+              {STEPS.map((_, i) => (
+                <div key={i} className="h-1 rounded-full transition-all duration-300"
+                  style={{ width: i === step ? 24 : 8, background: i <= step ? "#b87c5a" : "rgba(184,124,90,0.2)" }}
+                />
+              ))}
+            </div>
+
+            {/* Step header */}
+            <div className="mb-7">
+              <p className="text-[11px] tracking-[0.1em] uppercase text-[#b87c5a] mb-2">
+                Step {step + 1} of {STEPS.length}
+              </p>
+              <h1 className="text-[28px] sm:text-[30px] font-normal text-[#2c1f1a] leading-tight"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                {step === 0 && "I am a…"}
+                {step === 1 && <><span>Tell us about</span><br /><em className="text-[#b87c5a]">yourself</em></>}
+                {step === 2 && <><span>Create your</span><br /><em className="text-[#b87c5a]">account</em></>}
+              </h1>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm mb-5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={step === 2 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
+
+              {/* STEP 0 — Role */}
+              {step === 0 && (
+                <div className="flex flex-col gap-3.5">
+                  <p className="text-sm text-[#7a5a52] mb-1">This helps us personalise your experience.</p>
+                  {ROLES.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => setField("role", r.value)}
+                      className={`flex items-center gap-4 p-4 sm:p-5 rounded-2xl border text-left w-full transition-all duration-200 cursor-pointer
+                        ${form.role === r.value
+                          ? "border-[#b87c5a] bg-[rgba(184,124,90,0.07)]"
+                          : "border-[rgba(184,124,90,0.2)] bg-[rgba(253,246,239,0.4)] hover:border-[rgba(184,124,90,0.4)]"}`}
+                    >
+                      <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200
+                        ${form.role === r.value ? "bg-[rgba(184,124,90,0.15)] text-[#b87c5a]" : "bg-[rgba(184,124,90,0.07)] text-[#9a7065]"}`}>
+                        {r.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm sm:text-base font-medium mb-1 ${form.role === r.value ? "text-[#2c1f1a]" : "text-[#5a3e35]"}`}>
+                          {r.label}
+                        </p>
+                        <p className="text-xs sm:text-[13px] text-[#9a7065] leading-relaxed">{r.desc}</p>
+                      </div>
+                      {form.role === r.value && (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b87c5a" strokeWidth="2.5" className="flex-shrink-0">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* STEP 1 — Details */}
+              {step === 1 && (
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <label className={labelCls}>Full name</label>
+                    <input type="text" value={form.name} onChange={(e) => setField("name", e.target.value)}
+                      placeholder="e.g. Sari Dewi" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Phone number</label>
+                    <input type="tel" value={form.phone} onChange={(e) => setField("phone", e.target.value)}
+                      placeholder="+62 812 3456 7890" className={inputCls} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelCls}>Date of birth</label>
+                      <input type="date" value={form.date_of_birth} onChange={(e) => setField("date_of_birth", e.target.value)}
+                        className={inputCls} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Gender</label>
+                      <select value={form.gender} onChange={(e) => setField("gender", e.target.value)} className={selectCls}>
+                        <option value="">Select</option>
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                  {form.role === "doctor" && (
+                    <div>
+                      <label className={labelCls}>Specialization</label>
+                      <select value={form.specialization} onChange={(e) => setField("specialization", e.target.value)} className={selectCls}>
+                        <option value="">Select specialization</option>
+                        {SPECIALIZATIONS.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 2 — Account */}
+              {step === 2 && (
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <label className={labelCls}>Email address</label>
+                    <input type="email" value={form.email} onChange={(e) => setField("email", e.target.value)}
+                      placeholder="you@example.com" autoComplete="email" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={form.password}
+                        onChange={(e) => setField("password", e.target.value)}
+                        placeholder="Min. 8 characters"
+                        autoComplete="new-password"
+                        className={`${inputCls} pr-11`}
+                      />
+                      <button type="button" onClick={() => setShowPass(!showPass)} aria-label={showPass ? "Hide password" : "Show password"}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#b0907e] flex items-center">
+                        <EyeIcon open={showPass} />
+                      </button>
+                    </div>
+                    {form.password && (
+                      <div className="mt-2">
+                        <div className="flex gap-1 mb-1">
+                          {[1, 2, 3, 4].map((lvl) => (
+                            <div key={lvl} className={`flex-1 h-0.5 rounded-full transition-all duration-300
+                              ${lvl <= strength ? STRENGTH_COLORS[strength] : "bg-[rgba(184,124,90,0.15)]"}`} />
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-[#9a7065]">{STRENGTH_LABEL[strength]}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className={labelCls}>Confirm password</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirm ? "text" : "password"}
+                        value={form.confirmPassword}
+                        onChange={(e) => setField("confirmPassword", e.target.value)}
+                        placeholder="Re-enter your password"
+                        autoComplete="new-password"
+                        className={`${inputCls} pr-11
+                          ${form.confirmPassword && form.confirmPassword !== form.password ? "border-red-300"
+                          : form.confirmPassword && form.confirmPassword === form.password ? "border-emerald-300"
+                          : ""}`}
+                      />
+                      <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#b0907e] flex items-center">
+                        <EyeIcon open={showConfirm} />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[#9a7065] leading-relaxed">
+                    By creating an account, you agree to our{" "}
+                    <a href="/terms" className="text-[#b87c5a] hover:underline">Terms of Service</a>
+                    {" "}and{" "}
+                    <a href="/privacy" className="text-[#b87c5a] hover:underline">Privacy Policy</a>.
+                  </p>
+                </div>
+              )}
+
+              {/* Navigation */}
+              <div className="flex gap-2.5 mt-7">
+                {step > 0 && (
+                  <button type="button" onClick={handleBack}
+                    className="flex items-center gap-1.5 px-5 py-3 rounded-xl border border-[rgba(184,124,90,0.25)] text-[#5a3e35] text-sm cursor-pointer bg-transparent hover:bg-[rgba(184,124,90,0.05)] transition-all duration-200">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Back
+                  </button>
+                )}
+                <button type="submit" disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ background: loading ? "rgba(184,124,90,0.5)" : "linear-gradient(135deg, #c4865f, #9a5030)" }}>
+                  {loading ? (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                      Creating account…
+                    </>
+                  ) : step < 2 ? <>Continue <span className="text-base">→</span></>
+                               : <>Create Account <span className="text-base">→</span></>}
+                </button>
+              </div>
+            </form>
+
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-[rgba(184,124,90,0.15)]" />
+              <span className="text-xs text-[#b0907e]">or</span>
+              <div className="flex-1 h-px bg-[rgba(184,124,90,0.15)]" />
+            </div>
+
+            <p className="text-center text-sm text-[#7a5a52]">
+              Already have an account?{" "}
+              <Link to="/login" className="text-[#b87c5a] font-medium hover:underline">Sign in →</Link>
+            </p>
+
+            <div className="text-center mt-7">
+              <Link to="/" className="inline-flex items-center gap-1 text-xs text-[#b0907e] hover:text-[#b87c5a] transition-colors">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                Back to homepage
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
+
+export default RegisterPage;
