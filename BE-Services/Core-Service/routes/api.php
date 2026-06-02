@@ -6,6 +6,7 @@ use App\Http\Controllers\Doctor\DoctorController;
 use App\Http\Controllers\Medical\MedicalController;
 use App\Http\Controllers\Patient\PatientController;
 use App\Http\Controllers\Service\ServiceController;
+use App\Http\Controllers\Doctor\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -28,25 +29,33 @@ Route::prefix('auth')->group(function () {
 Route::prefix('doctors')->group(function () {
 
     // Publik — tidak butuh token, untuk keperluan pasien melihat daftar dokter
-    Route::get('/',                         [DoctorController::class, 'index']);
-    Route::get('/available',                [DoctorController::class, 'getAvailable']);
-    Route::get('/specialization/{specId}',  [DoctorController::class, 'getBySpecialization']);
-    Route::get('/{id}',                     [DoctorController::class, 'show']);
+    Route::get('/',[DoctorController::class, 'index']);
+    Route::get('/available',[DoctorController::class, 'getAvailable']);
+    Route::get('/specialization/{specId}',[DoctorController::class, 'getBySpecialization']);
+    Route::get('/{id}',[DoctorController::class, 'show']);
+    Route::get('/{doctorId}/schedules/active', [ScheduleController::class, 'active']);
 
-    // Private — butuh token Sanctum
-    Route::middleware('auth:sanctum')->group(function () {
+    // Private — hanya admin yang bisa kelola profil dokter dan jadwalnya
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         // Buat profil dokter baru — hanya admin
-        Route::post('/', [DoctorController::class, 'store'])
-            ->middleware('role:admin');
+        Route::post('/',[DoctorController::class, 'store']);
         // Update profil dokter — hanya admin
-        Route::put('/{id}', [DoctorController::class, 'update'])
-            ->middleware('role:admin');
+        Route::put('/{id}',                [DoctorController::class, 'update']);
         // Toggle ketersediaan dokter — hanya admin
-        Route::patch('/{id}/availability', [DoctorController::class, 'toggleAvailability'])
-            ->middleware('role:admin');
+        Route::patch('/{id}/availability', [DoctorController::class, 'toggleAvailability']);
         // Hapus profil dokter — hanya admin
-        Route::delete('/{id}', [DoctorController::class, 'destroy'])
-            ->middleware('role:admin');
+        Route::delete('/{id}',[DoctorController::class, 'destroy']);
+
+        // Ambil semua jadwal dokter — hanya admin
+        Route::get('/{doctorId}/schedules',[ScheduleController::class, 'index']);
+        // Tambah jadwal baru untuk dokter — hanya admin
+        Route::post('/{doctorId}/schedules',[ScheduleController::class, 'store']);
+        // Update jadwal dokter — hanya admin
+        Route::put('/{doctorId}/schedules/{scheduleId}',[ScheduleController::class, 'update']);
+        // Hapus jadwal dokter — hanya admin
+        Route::delete('/{doctorId}/schedules/{scheduleId}',[ScheduleController::class, 'destroy']);
+        // Toggle aktif/nonaktif jadwal dokter — hanya admin
+        Route::patch('/{doctorId}/schedules/{scheduleId}/toggle',[ScheduleController::class, 'toggle']);
     });
 });
 

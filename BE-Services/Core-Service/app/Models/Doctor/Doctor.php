@@ -2,19 +2,20 @@
 
 namespace App\Models\Doctor;
 
-use App\Models\User\User;
-use App\Models\Booking\Booking;
-use App\Models\Medical\MedicalRecord;
+use App\Models\User;
+use App\Models\Doctor\DoctorSchedule;
+use App\Models\Doctor\Specialization;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Doctor extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'doctors';
     protected $primaryKey = 'doctor_id';
 
     protected $fillable = [
@@ -28,33 +29,32 @@ class Doctor extends Model
     {
         return [
             'is_available' => 'boolean',
+            'deleted_at'   => 'datetime',
         ];
     }
 
-    // Relasi dengan model lain
-
+    // Relasi ke User (identitas login)
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    // Relasi ke Specialization
     public function specialization(): BelongsTo
     {
         return $this->belongsTo(Specialization::class, 'spec_id', 'spec_id');
     }
 
+    // Relasi ke semua jadwal dokter
     public function schedules(): HasMany
     {
         return $this->hasMany(DoctorSchedule::class, 'doctor_id', 'doctor_id');
     }
 
-    public function bookings(): HasMany
+    // Relasi ke jadwal aktif saja (scope praktis untuk query)
+    public function activeSchedules(): HasMany
     {
-        return $this->hasMany(Booking::class, 'doctor_id', 'doctor_id');
-    }
-
-    public function medicalRecords(): HasMany
-    {
-        return $this->hasMany(MedicalRecord::class, 'doctor_id', 'doctor_id');
+        return $this->hasMany(DoctorSchedule::class, 'doctor_id', 'doctor_id')
+            ->where('is_active', true);
     }
 }

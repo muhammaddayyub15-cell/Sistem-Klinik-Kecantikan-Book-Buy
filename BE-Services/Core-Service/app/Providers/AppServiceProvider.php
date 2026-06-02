@@ -55,6 +55,11 @@ class AppServiceProvider extends ServiceProvider
             return new DoctorRepository(new Doctor());
         });
 
+        $this->app->bind(\App\Service\Repositories\ScheduleRepository::class,
+            fn ($app) => new \App\Service\Repositories\ScheduleRepository(
+                new \App\Models\Doctor\DoctorSchedule()
+        ));
+
         $this->app->singleton(MedicalRepository::class, function () {
             return new MedicalRepository(new MedicalRecord(), new Prescription());
         });
@@ -91,6 +96,18 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(DoctorRepository::class)
             );
         });
+
+        $this->app->bind(\App\Service\ScheduleService::class,
+            fn ($app) => new \App\Service\ScheduleService(
+                $app->make(\App\Service\Repositories\ScheduleRepository::class),
+                $app->make(\App\Service\Repositories\DoctorRepository::class),
+            ));
+
+        $this->app->bind(\App\Service\BookingService::class,
+            fn ($app) => new \App\Service\BookingService(
+                $app->make(\App\Service\Repositories\BookingRepository::class),
+                $app->make(\App\Service\Repositories\ScheduleRepository::class),
+            ));
 
         $this->app->singleton(MedicalService::class, function ($app) {
             return new MedicalService(

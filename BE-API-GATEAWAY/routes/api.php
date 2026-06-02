@@ -17,6 +17,7 @@ Route::any('auth/register', [GatewayController::class, 'coreProxy']);
 
 // Doctors & Services (Core Service)
 Route::any('doctors/available', [GatewayController::class, 'coreProxy']);
+Route::any('doctors/{doctorId}/schedules/active', [GatewayController::class, 'coreProxy']);
 Route::any('doctors/specialization/{specId}', [GatewayController::class, 'coreProxy']);
 Route::any('doctors/{id}', [GatewayController::class, 'coreProxy'])->where('id', '[0-9]+');
 Route::any('doctors', [GatewayController::class, 'coreProxy']);
@@ -52,7 +53,11 @@ Route::middleware('auth.gateway')->group(function () {
         Route::put('doctors/{id}', [GatewayController::class, 'coreProxy']);
         Route::patch('doctors/{id}/availability', [GatewayController::class, 'coreProxy']);
         Route::delete('doctors/{id}', [GatewayController::class, 'coreProxy']);
-
+        Route::get('doctors/{doctorId}/schedules', [GatewayController::class, 'coreProxy']);
+        Route::post('doctors/{doctorId}/schedules', [GatewayController::class, 'coreProxy']);
+        Route::put('doctors/{doctorId}/schedules/{scheduleId}', [GatewayController::class, 'coreProxy']);
+        Route::delete('doctors/{doctorId}/schedules/{scheduleId}', [GatewayController::class, 'coreProxy']);
+        Route::patch('doctors/{doctorId}/schedules/{scheduleId}/toggle', [GatewayController::class, 'coreProxy']);
         Route::post('services', [GatewayController::class, 'coreProxy']);
         Route::put('services/{id}', [GatewayController::class, 'coreProxy']);
         Route::delete('services/{id}', [GatewayController::class, 'coreProxy']);

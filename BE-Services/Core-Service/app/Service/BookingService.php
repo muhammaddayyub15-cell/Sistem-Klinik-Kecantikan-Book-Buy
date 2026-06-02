@@ -3,62 +3,71 @@
 namespace App\Service;
 
 use App\Service\Repositories\BookingRepository;
+use App\Service\Repositories\ScheduleRepository;
 use App\Shared\Base\BaseService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 
 class BookingService extends BaseService
 {
-    protected BookingRepository $bookingRepository;
-
-    public function __construct(BookingRepository $bookingRepository)
-    {
+    public function __construct(
+        protected BookingRepository  $bookingRepository,
+        protected ScheduleRepository $scheduleRepository,
+    ) {
         parent::__construct($bookingRepository);
-        $this->bookingRepository = $bookingRepository;
     }
 
-    /**
-     * Mendapatkan semua booking beserta relasi terkait (patient, doctor, doctorSchedule, service).
-     */
+    // Mendapatkan semua booking berdasarkan role user
     public function getAllWithRelations($user): Collection
-{
-    return match($user->role) {
-        'patient' => $user->patient
-            ? $this->bookingRepository->findByPatient($user->patient->patient_id)
-            : collect(),
-        'doctor'  => $user->doctor
-            ? $this->bookingRepository->findByDoctor($user->doctor->doctor_id)
-            : collect(),
-        default   => $this->bookingRepository->allWithRelations(), // admin
-    };
-}
+    {
+        return match ($user->role) {
+            'patient' => $user->patient
+                ? $this->bookingRepository->findByPatient($user->patient->patient_id)
+                : collect(),
+            'doctor'  => $user->doctor
+                ? $this->bookingRepository->findByDoctor($user->doctor->doctor_id)
+                : collect(),
+            default   => $this->bookingRepository->allWithRelations(), // admin
+        };
+    }
 
-    /**
-     * Membuat booking baru dengan validasi slot jadwal dokter.
-     *
-     * @throws ValidationException
-     */
+    // Membuat booking baru dengan validasi hari dan slot jadwal dokter
     public function createBooking(array $data): mixed
     {
+        $bookedDate = $data['booked_date'];
+        $doctorId   = $data['doctor_id'];
+
+        // Dapatkan nama hari dari tanggal booking (e.g. "Monday")
+        $dayOfWeek = \Carbon\Carbon::parse($bookedDate)->format('l');
+
+        // Validasi 1: dokter harus punya jadwal aktif di hari tersebut
+        $schedule = $this->scheduleRepository->findByDoctorAndDay($doctorId, $dayOfWeek);
+
+        if (!$schedule) {
+            throw ValidationException::withMessages([
+                'booked_date' => "Doctor does not have an active schedule on {$dayOfWeek}.",
+            ]);
+        }
+
+        // Pastikan doctsched_id selalu konsisten dengan jadwal yang ditemukan
+        $data['doctsched_id'] = $schedule->schedule_id;
+
+        // Validasi 2: slot pada hari tersebut belum diambil
         $slotTaken = $this->bookingRepository->isSlotTaken(
             $data['doctsched_id'],
-            $data['booked_date']
+            $bookedDate,
         );
 
         if ($slotTaken) {
             throw ValidationException::withMessages([
-                'doctsched_id' => 'This schedule slot is already booked for the selected date.',
+                'booked_date' => 'This schedule slot is already booked for the selected date.',
             ]);
         }
 
         return $this->bookingRepository->create($data);
     }
 
-    /**
-     * Mengupdate status booking dengan validasi status saat ini (guard untuk completed/cancelled).
-     *
-     * @throws ValidationException
-     */
+    // Mengupdate status booking dengan guard untuk completed/cancelled
     public function updateStatus(int $id, array $data): mixed
     {
         $booking = $this->bookingRepository->findOrFail($id);
