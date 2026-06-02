@@ -29,8 +29,6 @@ class AuthService
             ];
 
             $user = $this->userRepository->create($payload);
-            // fresh() sudah dipanggil di BaseRepository::create()
-            // sehingga $user->user_id dijamin tidak null di sini
 
             Patient::create([
                 'user_id'       => $user->user_id,
@@ -66,7 +64,6 @@ class AuthService
         }
 
         $this->userRepository->updateLastLogin($user->user_id);
-        // user_id dijamin tidak null karena findByEmail query langsung dari DB
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -81,5 +78,22 @@ class AuthService
         if ($user && $user->currentAccessToken()) {
             $user->currentAccessToken()->delete();
         }
+    }
+
+    // ── Rotating Token ────────────────────────────────────────────────────────
+    // Hapus token lama, buat token baru. Dipanggil oleh AuthController@refresh.
+    // Endpoint: POST /auth/refresh (harus pakai middleware auth:sanctum)
+    public function refresh($user): array
+    {
+        // Hapus token yang sedang aktif
+        $user->currentAccessToken()->delete();
+
+        // Buat token baru
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return [
+            'user'  => $user,
+            'token' => $token,
+        ];
     }
 }

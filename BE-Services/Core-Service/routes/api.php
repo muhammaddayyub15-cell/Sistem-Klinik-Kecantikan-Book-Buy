@@ -22,6 +22,7 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me',      [AuthController::class, 'me']);
         Route::get('/validate-token',   [AuthController::class, 'validateToken']);
+        Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     });
 });
 

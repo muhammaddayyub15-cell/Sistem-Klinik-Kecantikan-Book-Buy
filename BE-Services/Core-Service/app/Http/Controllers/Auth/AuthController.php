@@ -74,4 +74,14 @@ class AuthController extends Controller
             message: 'Token valid.'
         );
     }
+
+    public function refresh(Request $request): JsonResponse
+    {
+        $result = $this->authService->refresh($request->user());
+
+        return $this->successResponse(
+            data: $result,
+            message: 'Token diperbarui.'
+        );
+    }
 }
