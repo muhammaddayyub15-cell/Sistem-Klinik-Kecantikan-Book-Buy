@@ -7,7 +7,7 @@ use App\Service\Shared\Base\BaseRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-// OrderRepository: Menangani semua query ke tabel orders.
+// OrderRepository: Query layer untuk tabel orders.
 class OrderRepository extends BaseRepository
 {
     public function __construct(Order $model)
@@ -15,14 +15,14 @@ class OrderRepository extends BaseRepository
         parent::__construct($model);
     }
 
-    // findAllPaginated: Ambil semua order dengan pagination dan eager load relasi.
+    // findAllPaginated: Ambil semua order dengan pagination.
     public function findAllPaginated(int $perPage = 15): LengthAwarePaginator
     {
         return $this->model->with(['orderItems', 'payment'])->paginate($perPage);
     }
 
-    // findByPatientSnapshot: Ambil semua order milik pasien tertentu berdasarkan snapshot ID.
-    // Menggunakan patient_id_snapshot karena tidak ada FK hidup ke Core Service.
+    // findByPatientSnapshot: Ambil semua order milik pasien tertentu.
+    // Pakai patient_id_snapshot karena tidak ada FK hidup ke Core Service.
     public function findByPatientSnapshot(int $patientId): Collection
     {
         return $this->model->with(['orderItems', 'payment'])
@@ -31,8 +31,9 @@ class OrderRepository extends BaseRepository
             ->get();
     }
 
-    // findByOrderNumber: Cari order berdasarkan nomor order unik.
-    // Digunakan untuk lookup dari sistem lain atau konfirmasi manual.
+    // findByOrderNumber: Cari order berdasarkan order_number.
+    // Dipakai saat webhook Midtrans masuk — Midtrans mengembalikan order_number
+    // di field 'order_id' payload karena itulah yang kita kirim saat initiate.
     public function findByOrderNumber(string $orderNumber): ?Order
     {
         return $this->model->with(['orderItems', 'payment'])
@@ -41,7 +42,6 @@ class OrderRepository extends BaseRepository
     }
 
     // findByStatus: Filter order berdasarkan status.
-    // Status: pending, processing, completed, cancelled
     public function findByStatus(string $status): Collection
     {
         return $this->model->with(['orderItems', 'payment'])
@@ -50,11 +50,22 @@ class OrderRepository extends BaseRepository
             ->get();
     }
 
-    // updateStatus: Update status order berdasarkan ID.
+    // updateStatus: Update status order dan timestamp terkait.
+    // $timestamps: array opsional, misal ['paid_at' => now(), 'completed_at' => now()]
     public function updateStatus(int $id, string $status, array $timestamps = []): Order
     {
         $order = $this->findById($id);
         $order->update(array_merge(['status' => $status], $timestamps));
+        return $order->fresh();
+    }
+
+    // updateOrderNumber: Simpan order_number yang di-generate PaymentService.
+    // Dipanggil tepat sebelum Snap request ke Midtrans agar order_number
+    // sudah tersimpan sebelum webhook mungkin masuk.
+    public function updateOrderNumber(int $id, string $orderNumber): Order
+    {
+        $order = $this->findById($id);
+        $order->update(['order_number' => $orderNumber]);
         return $order->fresh();
     }
 }

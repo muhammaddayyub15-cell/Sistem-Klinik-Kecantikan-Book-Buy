@@ -27,6 +27,8 @@ class Order extends Model
 
     protected $table = 'orders';
 
+    protected $primaryKey = 'order_id';
+
     protected $fillable = [
         'order_number',
         'patient_id_snapshot',
@@ -40,23 +42,19 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'paid_at'       => 'datetime',
-        'completed_at'  => 'datetime',
-        'cancelled_at'  => 'datetime',
-        'total_amount'  => 'decimal:2',
+        'paid_at'      => 'datetime',
+        'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'total_amount' => 'decimal:2',
     ];
 
-    // orderItems: Relasi 1:N ke tabel order_items.
-    // Satu order berisi banyak item produk.
     public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderItem::class, 'order_id');
+        return $this->hasMany(OrderItem::class, 'order_id', 'order_id');
     }
 
-    // payment: Relasi 1:1 ke tabel payments.
-    // Satu order hanya memiliki satu transaksi pembayaran.
     public function payment(): HasOne
     {
-        return $this->hasOne(\App\Models\Payment\Payment::class, 'order_id');
+        return $this->hasOne(\App\Models\Payment\Payment::class, 'order_id', 'order_id');
     }
 }

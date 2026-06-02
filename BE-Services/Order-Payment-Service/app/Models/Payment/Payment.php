@@ -9,17 +9,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 // Relasi 1:1 dengan ORDERS — satu order hanya memiliki satu transaksi pembayaran.
 //
 // Kolom Midtrans yang disimpan:
-//   - midtrans_id       : transaction_id dari Midtrans (untuk lookup di dashboard Midtrans)
+//   - midtrans_id       : transaction_id dari Midtrans
 //   - payment_methods   : metode pembayaran (gopay, bca_va, bni_va, dll)
 //   - payment_channel   : channel pembayaran (qris, bank_transfer, dll)
-//   - status            : status transaksi Midtrans (pending, settlement, expire, cancel, deny)
-//   - paid_at           : timestamp saat Midtrans mengirim notifikasi settlement
+//   - status            : pending | paid | cancel | expired
+//   - paid_at           : timestamp saat Midtrans kirim notifikasi settlement
 //
 // CATATAN: Jangan hapus record payment meski order dibatalkan.
 // Payment record adalah bukti transaksi — hanya status yang diupdate.
 class Payment extends Model
 {
     protected $table = 'payments';
+
+    protected $primaryKey = 'payment_id';
 
     public $timestamps = true;
 
@@ -38,9 +40,8 @@ class Payment extends Model
         'paid_at' => 'datetime',
     ];
 
-    // order: Relasi balik ke tabel orders.
     public function order(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Order\Order::class, 'order_id');
+        return $this->belongsTo(\App\Models\Order\Order::class, 'order_id', 'order_id');
     }
 }
