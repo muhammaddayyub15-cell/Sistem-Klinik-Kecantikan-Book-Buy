@@ -12,11 +12,14 @@ return new class extends Migration
             $table->id();
             $table->string('product_name');
             $table->string('SKU')->unique();
-            // FK ke product_categories — dibuat setelah tabel product_categories ada
+            // FK ke product_categories di database product-service dibuat setelah Product Service berjalan
             $table->foreignId('category_id')->constrained('product_categories')->cascadeOnDelete();
+            $table->text('description')->nullable();
             $table->decimal('price', 12, 2)->default(0);
             $table->integer('stock_qty')->default(0);
-            $table->string('unit'); // contoh: pcs, box, tablet, ml
+            $table->string('unit');
+            $table->decimal('rating', 3, 1)->nullable();
+            $table->string('tag')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

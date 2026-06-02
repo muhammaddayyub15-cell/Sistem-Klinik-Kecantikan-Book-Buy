@@ -6,40 +6,34 @@ import ProtectedRoute from "./ProtectedRoute";
 import MainLayout from "../components/layout/MainLayout";
 
 // ─── Lazy imports ─────────────────────────────────────────────────────────
-// [NOTE] Semua page di-lazy load agar bundle awal lebih kecil.
-//        Hanya halaman yang benar-benar diakses user yang akan di-download.
-//        Jika ada page yang sangat sering diakses (misal DashboardPage),
-//        bisa di-eager import — tapi lazy dulu sampai ada masalah performa nyata.
-
 // Public
-const HomePage     = lazy(() => import("../pages/HomePage"));
-const AboutPage    = lazy(() => import("../pages/AboutPage"));
+const HomePage = lazy(() => import("../pages/HomePage"));
+const AboutPage = lazy(() => import("../pages/AboutPage"));
 const ProductsPage = lazy(() => import("../pages/ProductsPage"));
-
-// [NOTE] LoginPage dan RegisterPage diletakkan di pages/auth/ sesuai
-//        struktur direktori di FRONTEND_ARCHITECTURE.md.
-const LoginPage    = lazy(() => import("../pages/auth/LoginPage"));
+const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
 
 // Patient
 const PatientDashboard = lazy(() => import("../pages/patient/DashboardPage"));
-const BookingPage      = lazy(() => import("../pages/patient/BookingPage"));
-const OrderPage        = lazy(() => import("../pages/patient/OrderPage"));
+const BookingPage = lazy(() => import("../pages/patient/BookingPage"));
+const OrderPage = lazy(() => import("../pages/patient/OrderPage"));
 
 // Doctor
 const DoctorDashboard = lazy(() => import("../pages/doctor/DashboardPage"));
-const RecordPage      = lazy(() => import("../pages/doctor/RecordPage"));
+const RecordPage = lazy(() => import("../pages/doctor/RecordPage"));
 
 // Admin
 const AdminDashboard = lazy(() => import("../pages/admin/DashboardPage"));
-const DoctorPage     = lazy(() => import("../pages/admin/DoctorPage"));
-const ServicePage    = lazy(() => import("../pages/admin/ServicePage"));
-const ProductPage    = lazy(() => import("../pages/admin/ProductPage"));
+const DoctorPage = lazy(() => import("../pages/admin/DoctorPage"));
+const ServicePage = lazy(() => import("../pages/admin/ServicePage"));
+const ProductPage = lazy(() => import("../pages/admin/ProductPage"));
+const AdminBookingPage = lazy(() => import("../pages/admin/AdminBookingPage"));
 
-// ─── Fallback saat lazy load ──────────────────────────────────────────────
-// [NOTE] Suspense fallback ini hanya muncul saat chunk JS page sedang di-download.
-//        Bukan pengganti loading state di dalam page itu sendiri.
-//        Ganti dengan komponen LoadingSpinner jika sudah dibuat.
+// ─── Placeholder page ─────────────────────────────────────────────────────
+const ComingSoon = lazy(() => import("../pages/ComingSoon"));
+const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
+
+// ─── Page loader ──────────────────────────────────────────────────────────
 const PageLoader = () => (
   <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
     <span>Loading...</span>
@@ -53,49 +47,50 @@ const AppRoutes = () => {
       <Routes>
 
         {/* ── Public ──────────────────────────────────────────────────── */}
-        <Route path="/"         element={<HomePage />} />
-        <Route path="/about"    element={<AboutPage />} />       {/* [FIX] tambah */}
-        <Route path="/products" element={<ProductsPage />} />   {/* [FIX] tambah */}
-        <Route path="/login"    element={<LoginPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* ── Authenticated routes — semua pakai MainLayout ────────────
-            [NOTE] MainLayout (Navbar + Sidebar + Outlet) di-wrap di sini,
-                   bukan di dalam ProtectedRoute, agar layout hanya render
-                   sekali untuk semua protected route tanpa remount.
-                   Urutan nesting: ProtectedRoute → MainLayout → page.        */}
-
-        {/* Patient */}
+        {/* ── Patient ─────────────────────────────────────────────────── */}
         <Route element={<ProtectedRoute allowedRoles={["patient"]} />}>
           <Route element={<MainLayout />}>
             <Route path="/patient/dashboard" element={<PatientDashboard />} />
-            <Route path="/patient/booking"   element={<BookingPage />} />
-            <Route path="/patient/order"     element={<OrderPage />} />
+            <Route path="/patient/booking" element={<BookingPage />} />
+            <Route path="/patient/order" element={<OrderPage />} />
           </Route>
         </Route>
 
-        {/* Doctor */}
+        {/* ── Doctor ──────────────────────────────────────────────────── */}
         <Route element={<ProtectedRoute allowedRoles={["doctor"]} />}>
           <Route element={<MainLayout />}>
             <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-            <Route path="/doctor/records"   element={<RecordPage />} />
+            <Route path="/doctor/records" element={<RecordPage />} />
+            <Route path="/doctor/records/new" element={<ComingSoon title="New Record" />} />
+            <Route path="/doctor/schedule" element={<ComingSoon title="My Schedule" />} />
+            <Route path="/doctor/patients" element={<ComingSoon title="Patients" />} />
           </Route>
         </Route>
 
-        {/* Admin */}
+        {/* ── Admin ───────────────────────────────────────────────────── */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route element={<MainLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/doctors"   element={<DoctorPage />} />
-            <Route path="/admin/services"  element={<ServicePage />} />
-            <Route path="/admin/products"  element={<ProductPage />} />
+            <Route path="/admin/doctors" element={<DoctorPage />} />
+            <Route path="/admin/services" element={<ServicePage />} />
+            <Route path="/admin/products" element={<ProductPage />} />
+            <Route path="/admin/bookings" element={<AdminBookingPage />} />
+            <Route path="/admin/patients" element={<ComingSoon title="Patients" />} />
+            <Route path="/admin/orders" element={<ComingSoon title="Orders" />} />
+            <Route path="/admin/reports" element={<ComingSoon title="Reports" />} />
+            <Route path="/admin/products/new" element={<ComingSoon title="Add Product" />} />
+            <Route path="/admin/products/stock" element={<ComingSoon title="Stock Logs" />} />
           </Route>
         </Route>
 
-        {/* ── Catch-all: redirect ke home ──────────────────────────────
-            [NOTE] Tangkap semua path yang tidak dikenal daripada blank page.
-                   Ganti dengan <NotFoundPage /> jika sudah dibuat.          */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* ── Catch-all ───────────────────────────────────────────────── */}
+        <Route path="*" element={<NotFoundPage />} />
 
       </Routes>
     </Suspense>

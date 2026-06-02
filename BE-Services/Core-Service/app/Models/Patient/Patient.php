@@ -21,6 +21,8 @@ class Patient extends Model
     // patient_id (bukan default 'id')
     protected $primaryKey = 'patient_id';
 
+    protected $with = ['user'];
+
     protected $fillable = [
         'user_id',
         'date_of_birth',

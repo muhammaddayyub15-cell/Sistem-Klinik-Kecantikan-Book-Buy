@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id('service_id');
-            $table->foreignId('service_category_id')
+            $table->foreignId('category_id')
                   ->constrained('service_categories', 'category_id')
                   ->onDelete('restrict');
-            $table->string('name');
+            $table->string('service_name');
             $table->text('description')->nullable();
             $table->Decimal('base_price', 12, 2)->default(0);
             $table->string('unit')->nullable(); // contoh: "sesi", "30 menit"

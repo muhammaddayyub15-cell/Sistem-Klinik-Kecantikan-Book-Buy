@@ -3,6 +3,7 @@
 namespace App\Models\Service;
 
 use App\Models\Booking\Booking;
+use App\Models\Service\ServiceCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,38 +14,55 @@ class Service extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Eksplisit nama tabel sesuai ERD
-    protected $table = 'services';
+    // Table custom (singular)
+    protected $table = 'service';
 
-    // Service_id (bukan default 'id')
+    // Primary key custom
     protected $primaryKey = 'service_id';
+
+    // Pastikan PK auto increment
+    public $incrementing = true;
+
+    // Kalau tipe PK integer
+    protected $keyType = 'int';
 
     protected $fillable = [
         'category_id',
         'service_name',
         'description',
         'base_price',
-
-        // deleted_at dikelola otomatis oleh SoftDeletes
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            // Cast ke decimal 2 angka di belakang koma
             'base_price' => 'decimal:2',
+            'is_active'  => 'boolean',
         ];
     }
 
-    // Relasi ke ServiceCategory (N:1 — banyak layanan dalam satu kategori)
+    /**
+     * Relasi ke Category (N:1)
+     */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(ServiceCategory::class, 'category_id', 'category_id');
+        return $this->belongsTo(
+            ServiceCategory::class,
+            'category_id',
+            'category_id'
+        );
     }
 
-    // Relasi ke Booking (1:N — satu layanan bisa dipilih di banyak booking)
+    /**
+     * Relasi ke Booking (1:N)
+     */
     public function bookings(): HasMany
     {
-        return $this->hasMany(Booking::class, 'service_id', 'service_id');
+        return $this->hasMany(
+            Booking::class,
+            'service_id',
+            'service_id'
+        );
     }
 }

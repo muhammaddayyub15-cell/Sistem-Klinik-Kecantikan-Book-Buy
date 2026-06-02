@@ -27,10 +27,9 @@ class RegisterRequest extends FormRequest
             'full_name'             => 'required|string|max:255',
             'email'                 => 'required|email|unique:users,email',
             'password'              => 'required|string|min:8|confirmed',
-            // admin dikeluarkan dari endpoint publik
-            // admin hanya bisa dibuat via seeder atau panel internal
-            'role'                  => 'nullable|in:doctor,patient,staff',
             'password_confirmation' => 'required',
+            'role'                  => 'nullable|in:doctor,patient,staff',
+            'phone'                 => 'nullable|string|max:20',
         ];
     }
 
@@ -47,6 +46,7 @@ class RegisterRequest extends FormRequest
             'password.confirmed'             => 'Konfirmasi password tidak cocok.',
             'password_confirmation.required' => 'Konfirmasi password wajib diisi.',
             'role.in'                        => 'Role tidak valid.',
+            'phone.max'                      => 'Nomor telepon maksimal 20 karakter.',
         ];
     }
 }

@@ -49,12 +49,12 @@ class BookingService extends BaseService
             ]);
         }
 
-        // Pastikan doctsched_id selalu konsisten dengan jadwal yang ditemukan
-        $data['doctsched_id'] = $schedule->schedule_id;
+        // Pastikan doctor_schedule_id selalu konsisten dengan jadwal yang ditemukan
+        $data['doctor_schedule_id'] = $schedule->schedule_id;
 
         // Validasi 2: slot pada hari tersebut belum diambil
         $slotTaken = $this->bookingRepository->isSlotTaken(
-            $data['doctsched_id'],
+            $data['doctor_schedule_id'],
             $bookedDate,
         );
 

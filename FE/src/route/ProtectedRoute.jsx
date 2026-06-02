@@ -7,8 +7,8 @@ import { useAuth } from "../contexts/AuthContext";
 //        Tambahkan entry di sini jika ada role baru.
 const ROLE_HOME = {
   patient: "/patient/dashboard",
-  doctor:  "/doctor/dashboard",
-  admin:   "/admin/dashboard",
+  doctor: "/doctor/dashboard",
+  admin: "/admin/dashboard",
 };
 
 // ─── ProtectedRoute ───────────────────────────────────────────────────────

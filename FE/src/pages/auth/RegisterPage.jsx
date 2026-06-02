@@ -36,9 +36,9 @@ const REDIRECT = {
 
 const SPECIALIZATIONS = [
   { value: "aesthetic_dermatology", label: "Aesthetic Dermatology" },
-  { value: "laser_skin",            label: "Laser & Skin Expert" },
-  { value: "cosmetic_physician",    label: "Cosmetic Physician" },
-  { value: "general_skin",          label: "General Skincare" },
+  { value: "laser_skin", label: "Laser & Skin Expert" },
+  { value: "cosmetic_physician", label: "Cosmetic Physician" },
+  { value: "general_skin", label: "General Skincare" },
 ];
 
 const inputCls =
@@ -54,7 +54,7 @@ const getPasswordStrength = (pw) => {
   return 3;
 };
 
-const STRENGTH_LABEL  = ["", "Too short", "Weak", "Good", "Strong ✓"];
+const STRENGTH_LABEL = ["", "Too short", "Weak", "Good", "Strong ✓"];
 const STRENGTH_COLORS = ["", "bg-red-400", "bg-orange-400", "bg-yellow-500", "bg-emerald-500"];
 
 const EyeIcon = ({ open }) =>
@@ -74,10 +74,10 @@ function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const [step, setStep]               = useState(0);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState("");
-  const [showPass, setShowPass]       = useState(false);
+  const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [form, setForm] = useState({
@@ -95,19 +95,19 @@ function RegisterPage() {
 
   const validateStep = () => {
     if (step === 0) {
-      if (!form.role)          { setError("Please select your role.");        return false; }
+      if (!form.role) { setError("Please select your role."); return false; }
     }
     if (step === 1) {
-      if (!form.name.trim())   { setError("Full name is required.");          return false; }
-      if (!form.phone.trim())  { setError("Phone number is required.");       return false; }
-      if (!form.date_of_birth) { setError("Date of birth is required.");      return false; }
-      if (!form.gender)        { setError("Gender is required.");             return false; }
+      if (!form.name.trim()) { setError("Full name is required."); return false; }
+      if (!form.phone.trim()) { setError("Phone number is required."); return false; }
+      if (!form.date_of_birth) { setError("Date of birth is required."); return false; }
+      if (!form.gender) { setError("Gender is required."); return false; }
     }
     if (step === 2) {
-      if (!form.email.trim())                         { setError("Email is required.");                       return false; }
-      if (!/\S+@\S+\.\S+/.test(form.email))           { setError("Enter a valid email address.");             return false; }
-      if (form.password.length < 8)                   { setError("Password must be at least 8 characters."); return false; }
-      if (form.password !== form.confirmPassword)     { setError("Passwords do not match.");                  return false; }
+      if (!form.email.trim()) { setError("Email is required."); return false; }
+      if (!/\S+@\S+\.\S+/.test(form.email)) { setError("Enter a valid email address."); return false; }
+      if (form.password.length < 8) { setError("Password must be at least 8 characters."); return false; }
+      if (form.password !== form.confirmPassword) { setError("Passwords do not match."); return false; }
     }
     setError("");
     return true;
@@ -121,7 +121,17 @@ function RegisterPage() {
     if (!validateStep()) return;
     setLoading(true);
     try {
-      const { confirmPassword, ...payload } = form;
+      const payload = {
+        full_name: form.name,
+        email: form.email,
+        password: form.password,
+        password_confirmation: form.confirmPassword,
+        role: form.role,
+        phone: form.phone,
+        gender: form.gender,
+        date_of_birth: form.date_of_birth,
+      };
+
       const userData = await register(payload);
       navigate(REDIRECT[userData.role] ?? "/", { replace: true });
     } catch (err) {
@@ -164,15 +174,15 @@ function RegisterPage() {
               Registration steps
             </p>
             {STEPS.map((s, i) => {
-              const done   = i < step;
+              const done = i < step;
               const active = i === step;
               return (
                 <div key={s} className="flex items-start gap-4">
                   <div className="flex flex-col items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300
-                      ${done   ? "bg-[#b87c5a] border-0"
-                      : active ? "bg-[rgba(184,124,90,0.2)] border border-[#b87c5a]"
-                               : "bg-[rgba(255,255,255,0.06)] border border-white/10"}`}
+                      ${done ? "bg-[#b87c5a] border-0"
+                        : active ? "bg-[rgba(184,124,90,0.2)] border border-[#b87c5a]"
+                          : "bg-[rgba(255,255,255,0.06)] border border-white/10"}`}
                     >
                       {done ? (
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
@@ -375,8 +385,8 @@ function RegisterPage() {
                         autoComplete="new-password"
                         className={`${inputCls} pr-11
                           ${form.confirmPassword && form.confirmPassword !== form.password ? "border-red-300"
-                          : form.confirmPassword && form.confirmPassword === form.password ? "border-emerald-300"
-                          : ""}`}
+                            : form.confirmPassword && form.confirmPassword === form.password ? "border-emerald-300"
+                              : ""}`}
                       />
                       <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#b0907e] flex items-center">
@@ -415,7 +425,7 @@ function RegisterPage() {
                       Creating account…
                     </>
                   ) : step < 2 ? <>Continue <span className="text-base">→</span></>
-                               : <>Create Account <span className="text-base">→</span></>}
+                    : <>Create Account <span className="text-base">→</span></>}
                 </button>
               </div>
             </form>
