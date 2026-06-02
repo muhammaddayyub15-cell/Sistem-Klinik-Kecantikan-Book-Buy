@@ -17,6 +17,8 @@ const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
 const PatientDashboard = lazy(() => import("../pages/patient/DashboardPage"));
 const BookingPage = lazy(() => import("../pages/patient/BookingPage"));
 const OrderPage = lazy(() => import("../pages/patient/OrderPage"));
+const MyBookingsPage = lazy(() => import("../pages/patient/MyBookingsPage"));
+const InProductPage = lazy(() => import("../pages/patient/InProductPage"));
 
 // Doctor
 const DoctorDashboard = lazy(() => import("../pages/doctor/DashboardPage"));
@@ -59,6 +61,8 @@ const AppRoutes = () => {
             <Route path="/patient/dashboard" element={<PatientDashboard />} />
             <Route path="/patient/booking" element={<BookingPage />} />
             <Route path="/patient/order" element={<OrderPage />} />
+            <Route path="/patient/my-bookings" element={<MyBookingsPage />} />
+            <Route path="/patient/products" element={<InProductPage />} />
           </Route>
         </Route>
 

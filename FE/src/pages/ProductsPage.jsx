@@ -126,27 +126,25 @@ const fmt = (n) =>
 // ── Shared styles (mengikuti pola inputCls / labelCls di RegisterPage) ────────
 
 const filterBtnCls = (active) =>
-  `flex-shrink-0 px-5 py-2 rounded-full text-xs tracking-wide transition-all duration-200 cursor-pointer border ${
-    active
-      ? "bg-[#b87c5a] text-white border-[#b87c5a]"
-      : "bg-transparent text-[#5a3e35] border-[rgba(184,124,90,0.25)] hover:border-[rgba(184,124,90,0.4)]"
+  `flex-shrink-0 px-5 py-2 rounded-full text-xs tracking-wide transition-all duration-200 cursor-pointer border ${active
+    ? "bg-[#b87c5a] text-white border-[#b87c5a]"
+    : "bg-transparent text-[#5a3e35] border-[rgba(184,124,90,0.25)] hover:border-[rgba(184,124,90,0.4)]"
   }`;
 
 const addBtnCls = (inCart) =>
-  `px-3 py-1.5 rounded-full text-xs transition-all duration-200 active:scale-95 border border-[rgba(184,124,90,0.2)] cursor-pointer ${
-    inCart
-      ? "bg-[#b87c5a] text-white"
-      : "bg-[rgba(184,124,90,0.1)] text-[#8b4c34] hover:bg-[rgba(184,124,90,0.2)]"
+  `px-3 py-1.5 rounded-full text-xs transition-all duration-200 active:scale-95 border border-[rgba(184,124,90,0.2)] cursor-pointer ${inCart
+    ? "bg-[#b87c5a] text-white"
+    : "bg-[rgba(184,124,90,0.1)] text-[#8b4c34] hover:bg-[rgba(184,124,90,0.2)]"
   }`;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState("All");
-  const [added, setAdded]                   = useState(null);
+  const [added, setAdded] = useState(null);
 
   const { cartItems, addToCart, totalItems } = useCart();
-  const { isAuthenticated }                  = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const filtered =
     activeCategory === "All"
@@ -256,7 +254,7 @@ export default function ProductsPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {filtered.map((p) => {
               const qtyInCart = getQtyInCart(p.id);
-              const isAdding  = added === p.id;
+              const isAdding = added === p.id;
 
               return (
                 <div

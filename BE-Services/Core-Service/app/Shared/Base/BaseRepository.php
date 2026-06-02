@@ -31,14 +31,17 @@ abstract class BaseRepository
     public function create(array $attributes)
     {
         $model = $this->model->create($attributes);
-        return $model->fresh(); // fix: reload dari DB agar PK (user_id) ter-load
+        // FIX: gunakan refresh() agar selalu respect custom $primaryKey (misal patient_id, doctor_id, dsb)
+        // fresh() berpotensi query dengan kolom 'id' sehingga gagal pada model dengan custom PK
+        return $model->refresh();
     }
 
     public function update($id, array $attributes)
     {
         $record = $this->findOrFail($id);
         $record->update($attributes);
-        return $record->fresh(); // konsisten: pastikan data terbaru setelah update
+        // FIX: sama seperti create(), gunakan refresh() bukan fresh()
+        return $record->refresh();
     }
 
     public function delete($id)

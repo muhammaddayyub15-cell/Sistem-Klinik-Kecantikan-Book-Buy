@@ -18,15 +18,12 @@ class StoreBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id'  => 'required|exists:patients,patient_id',
-            'doctor_id'   => 'required|exists:doctors,doctor_id',
-            'service_id'  => 'required|exists:services,service_id',
-            'booked_date' => 'required|date|after_or_equal:today',
-            'notes'       => 'nullable|string|max:500',
-
-            // ✅ nullable — tidak wajib dikirim frontend
-            // backend yang set otomatis di BookingService::createBooking()
-            // kolom di tabel adalah schedule_id, bukan doctor_schedule_id
+            // patient_id diambil dari token di BookingService — tidak dikirim frontend
+            'patient_id'         => 'nullable|exists:patients,patient_id',
+            'doctor_id'          => 'required|exists:doctors,doctor_id',
+            'service_id'         => 'required|exists:service,service_id',
+            'booked_date'        => 'required|date|after_or_equal:today',
+            'notes'              => 'nullable|string|max:500',
             'doctor_schedule_id' => 'nullable|exists:doctor_schedules,schedule_id',
         ];
     }
@@ -34,7 +31,6 @@ class StoreBookingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'patient_id.required'        => 'Pasien wajib diisi.',
             'patient_id.exists'          => 'Pasien tidak ditemukan.',
             'doctor_id.required'         => 'Dokter wajib diisi.',
             'doctor_id.exists'           => 'Dokter tidak ditemukan.',

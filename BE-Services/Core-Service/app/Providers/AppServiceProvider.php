@@ -17,6 +17,7 @@ use App\Models\User\User;
 use App\Service\Repositories\BookingRepository;
 use App\Service\Repositories\DoctorRepository;
 use App\Service\Repositories\MedicalRepository;
+use App\Service\Repositories\ScheduleRepository;
 use App\Service\Repositories\PatientRepository;
 use App\Service\Repositories\ServiceRepository;
 use App\Service\Repositories\UserRepository;
@@ -25,6 +26,7 @@ use App\Service\Repositories\UserRepository;
 use App\Service\AuthService;
 use App\Service\BookingService;
 use App\Service\DoctorService;
+use App\Service\ScheduleService;
 use App\Service\MedicalService;
 use App\Service\PatientService;
 use App\Service\ServiceService;
@@ -87,7 +89,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BookingService::class, function ($app) {
             return new BookingService(
                 $app->make(BookingRepository::class),
-                $app->make(DoctorRepository::class)
+                $app->make(ScheduleRepository::class)
             );
         });
 
@@ -101,12 +103,6 @@ class AppServiceProvider extends ServiceProvider
             fn ($app) => new \App\Service\ScheduleService(
                 $app->make(\App\Service\Repositories\ScheduleRepository::class),
                 $app->make(\App\Service\Repositories\DoctorRepository::class),
-            ));
-
-        $this->app->bind(\App\Service\BookingService::class,
-            fn ($app) => new \App\Service\BookingService(
-                $app->make(\App\Service\Repositories\BookingRepository::class),
-                $app->make(\App\Service\Repositories\ScheduleRepository::class),
             ));
 
         $this->app->singleton(MedicalService::class, function ($app) {

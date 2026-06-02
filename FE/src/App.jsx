@@ -1,8 +1,9 @@
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider }    from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { BookingProvider } from "./contexts/BookingContext";
-import { CartProvider }    from "./contexts/CartContext";
-import AppRoutes           from "./route/index";
+import { CartProvider } from "./contexts/CartContext";
+import AppRoutes from "./route/index";
+import MyBookingsPage from "./pages/patient/MyBookingsPage";
 
 // ─── Provider order ───────────────────────────────────────────────────────
 //   Urutan wrapping penting:

@@ -258,7 +258,7 @@ function BookingPage() {
       await createBooking({
         doctor_id: selectedDoctor.doctor_id,
         service_id: selectedService.service_id,
-        doctsched_id: selectedSchedule.schedule_id,
+        doctor_schedule_id: selectedSchedule.schedule_id,
         booked_date: toISODate(selectedDate),
         notes: notes || null,
       });

@@ -2,7 +2,7 @@
 
 namespace App\Models\Doctor;
 
-use App\Models\User;
+use App\Models\User\User;
 use App\Models\Doctor\DoctorSchedule;
 use App\Models\Doctor\Specialization;
 use Illuminate\Database\Eloquent\Model;

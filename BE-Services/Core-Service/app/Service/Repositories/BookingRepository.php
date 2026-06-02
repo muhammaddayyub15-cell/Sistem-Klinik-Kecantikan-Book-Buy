@@ -54,7 +54,7 @@ class BookingRepository extends BaseRepository
     public function isSlotTaken(int $doctorSchedId, string $bookedDate, ?int $excludeBookingId = null): bool
     {
         return $this->model
-            ->where('doctsched_id', $doctorSchedId)
+            ->where('doctor_schedule_id', $doctorSchedId)
             ->where('booked_date', $bookedDate)
             ->whereNotIn('status', ['cancelled'])
             ->when($excludeBookingId, fn($q) => $q->where('booking_id', '!=', $excludeBookingId))

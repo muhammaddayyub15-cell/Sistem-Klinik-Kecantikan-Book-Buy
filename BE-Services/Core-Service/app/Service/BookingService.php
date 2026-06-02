@@ -34,6 +34,19 @@ class BookingService extends BaseService
     // Membuat booking baru dengan validasi hari dan slot jadwal dokter
     public function createBooking(array $data): mixed
     {
+        // Ambil patient_id dari user yang sedang login
+        $user    = auth()->user()->load('patient');
+        $patient = $user->patient;
+
+        if (!$patient) {
+            throw ValidationException::withMessages([
+                'patient_id' => 'Patient profile not found for this user.',
+            ]);
+        }
+
+        // Override patient_id dari token — jangan percaya dari request
+        $data['patient_id'] = $patient->patient_id;
+
         $bookedDate = $data['booked_date'];
         $doctorId   = $data['doctor_id'];
 
@@ -49,8 +62,10 @@ class BookingService extends BaseService
             ]);
         }
 
-        // Pastikan doctor_schedule_id selalu konsisten dengan jadwal yang ditemukan
+        // Set data dari schedule yang ditemukan
         $data['doctor_schedule_id'] = $schedule->schedule_id;
+        $data['start_time']         = $schedule->start_time;
+        $data['end_time']           = $schedule->end_time;
 
         // Validasi 2: slot pada hari tersebut belum diambil
         $slotTaken = $this->bookingRepository->isSlotTaken(
