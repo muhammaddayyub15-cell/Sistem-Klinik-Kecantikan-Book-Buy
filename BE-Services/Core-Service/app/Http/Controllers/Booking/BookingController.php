@@ -27,7 +27,7 @@ class BookingController extends Controller
         $bookings = $this->bookingService->getAllWithRelations($request->user());
         return $this->successResponse($bookings);
     } catch (\Exception $e) {
-        return $this->errorResponse('Gagal mengambil data booking', 500);
+        return $this->errorResponse($e->getMessage(), 500); // ← ubah sementara
     }
 }
 
@@ -125,3 +125,4 @@ class BookingController extends Controller
         }
     }
 }
+

@@ -22,7 +22,7 @@ class Booking extends Model
     protected $fillable = [
         'doctor_id',
         'patient_id',
-        'doctsched_id',
+        'doctor_schedule_id',
         'service_id',
         'booked_date',
         'start_time',
@@ -44,26 +44,26 @@ class Booking extends Model
 
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class, 'patient_id', 'id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
 
     public function doctor(): BelongsTo
     {
-        return $this->belongsTo(Doctor::class, 'doctor_id', 'id');
+        return $this->belongsTo(Doctor::class, 'doctor_id', 'doctor_id');
     }
 
     public function doctorSchedule(): BelongsTo
     {
-        return $this->belongsTo(DoctorSchedule::class, 'doctsched_id', 'id');
+        return $this->belongsTo(DoctorSchedule::class, 'doctor_schedule_id', 'schedule_id');
     }
 
     public function service(): BelongsTo
     {
-        return $this->belongsTo(Service::class, 'service_id', 'id');
+        return $this->belongsTo(Service::class, 'service_id', 'service_id');
     }
 
     public function medicalRecord(): HasOne
     {
-        return $this->hasOne(MedicalRecord::class, 'booking_id', 'id');
+        return $this->hasOne(MedicalRecord::class, 'booking_id', 'booking_id');
     }
 }
