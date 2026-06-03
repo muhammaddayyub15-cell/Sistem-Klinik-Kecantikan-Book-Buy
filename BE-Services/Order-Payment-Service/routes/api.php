@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 // ── Order Routes ───────────────────────────────────────────────────────
 // Semua route order wajib login terlebih dahulu via Sanctum
-Route::prefix('orders')->middleware('auth:sanctum')->group(function () {
+Route::prefix('orders')->middleware('auth.api')->group(function () {
 
     // Ambil semua order — hanya admin
     Route::get('/', [OrderController::class, 'index'])

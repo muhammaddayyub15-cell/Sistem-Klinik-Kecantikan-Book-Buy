@@ -3,7 +3,9 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { BookingProvider } from "./contexts/BookingContext";
 import { CartProvider } from "./contexts/CartContext";
 import AppRoutes from "./route/index";
-import MyBookingsPage from "./pages/patient/MyBookingsPage";
+import CartPage from "./pages/patient/CartPage";
+
+
 
 // ─── Provider order ───────────────────────────────────────────────────────
 //   Urutan wrapping penting:

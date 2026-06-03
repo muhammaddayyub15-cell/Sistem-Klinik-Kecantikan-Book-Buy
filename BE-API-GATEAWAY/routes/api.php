@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 // Auth (Core Service)
 Route::any('auth/login', [GatewayController::class, 'coreProxy']);
 Route::any('auth/register', [GatewayController::class, 'coreProxy']);
+Route::any('auth/refresh', [GatewayController::class, 'coreProxy']);
 
 // Doctors & Services (Core Service)
 Route::any('doctors/available', [GatewayController::class, 'coreProxy']);

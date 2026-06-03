@@ -12,24 +12,29 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("AuthContext useEffect running");
-    // ── Restore session dari localStorage ──────────────────────────────────
     try {
       const storedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
       const storedUser = localStorage.getItem(STORAGE_KEY_USER);
 
-      console.log("storedToken:", storedToken); // ← tambah ini
-      console.log("storedUser:", storedUser);   // ← tambah ini
-
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
-        getMe().catch(() => {
-          localStorage.removeItem(STORAGE_KEY_TOKEN);
-          localStorage.removeItem(STORAGE_KEY_USER);
-          setUser(null);
-          setToken(null);
-        });
+
+        // ── Refresh user data dari server agar patient_id selalu fresh ──
+        getMe()
+          .then((res) => {
+            const freshUser = res.data?.data ?? res.data;
+            if (freshUser) {
+              setUser(freshUser);
+              localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(freshUser));
+            }
+          })
+          .catch(() => {
+            localStorage.removeItem(STORAGE_KEY_TOKEN);
+            localStorage.removeItem(STORAGE_KEY_USER);
+            setUser(null);
+            setToken(null);
+          });
       }
     } catch (err) {
       console.error("[AuthContext] Failed to restore session:", err);
@@ -39,9 +44,6 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     }
 
-    // ── Listen event unauthorized dari axios interceptor ───────────────────
-    // Dipanggil ketika refresh token gagal — clear session,
-    // ProtectedRoute otomatis redirect ke /login karena isAuthenticated = false
     const handleUnauthorized = () => {
       setUser(null);
       setToken(null);
@@ -50,14 +52,9 @@ export function AuthProvider({ children }) {
     };
 
     window.addEventListener("unauthorized", handleUnauthorized);
-
-    // ← cleanup ini sekarang TERDAFTAR dengan benar
-    return () => {
-      window.removeEventListener("unauthorized", handleUnauthorized);
-    };
+    return () => window.removeEventListener("unauthorized", handleUnauthorized);
   }, []);
 
-  // ── Helper: simpan ke state + localStorage ─────────────────────────────
   const persistSession = useCallback((userData, tokenValue) => {
     setUser(userData);
     setToken(tokenValue);
@@ -65,19 +62,22 @@ export function AuthProvider({ children }) {
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(userData));
   }, []);
 
-  // ── login ──────────────────────────────────────────────────────────────
   const login = useCallback(async (email, password) => {
     const res = await apiLogin({ email, password });
-    console.log("res.data:", res.data);
-    console.log("res.data.data:", res.data.data);
     const { user: userData, token: tokenValue } = res.data.data;
-    console.log("userData:", userData);
-    console.log("tokenValue:", tokenValue);
     persistSession(userData, tokenValue);
-    return userData;
+
+    // ── Fetch ulang /me setelah login agar patient_id tersimpan ──
+    try {
+      const meRes = await getMe();
+      const fullUser = meRes.data?.data ?? meRes.data;
+      if (fullUser) persistSession(fullUser, tokenValue);
+      return fullUser ?? userData;
+    } catch {
+      return userData;
+    }
   }, [persistSession]);
 
-  // ── register ───────────────────────────────────────────────────────────
   const register = useCallback(async (data) => {
     const res = await apiRegister(data);
     const { user: userData, token: tokenValue } = res.data.data;
@@ -85,12 +85,11 @@ export function AuthProvider({ children }) {
     return userData;
   }, [persistSession]);
 
-  // ── logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
       await apiLogout();
     } catch {
-      // Token sudah expired di server — tetap bersihkan session di client.
+      // Token sudah expired — tetap bersihkan session di client
     } finally {
       setUser(null);
       setToken(null);
@@ -119,7 +118,7 @@ export function AuthProvider({ children }) {
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error("useAuth must be used within <AuthProvider>. Wrap your app with <AuthProvider> in main.jsx.");
+    throw new Error("useAuth must be used within <AuthProvider>.");
   }
   return ctx;
 };

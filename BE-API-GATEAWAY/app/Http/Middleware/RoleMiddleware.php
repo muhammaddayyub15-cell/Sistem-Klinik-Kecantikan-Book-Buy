@@ -17,7 +17,7 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        $authUser = $request->input('_auth_user');
+        $authUser = $request->attributes->get('_auth_user');
         $userRole = $authUser['role'] ?? null;
 
         if (!in_array($userRole, $roles)) {

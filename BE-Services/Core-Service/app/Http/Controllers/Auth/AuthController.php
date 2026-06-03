@@ -54,10 +54,13 @@ class AuthController extends Controller
     }
 
     public function me(Request $request): JsonResponse
-    {
-        return $this->successResponse(
-            data: $request->user()
-        );
+{
+    $user = $request->user()->load('patient');
+    return $this->successResponse(
+        data: array_merge($user->toArray(), [
+            'patient_id' => $user->patient?->patient_id,
+        ])
+    );
     }
 
     public function validateToken(Request $request): JsonResponse

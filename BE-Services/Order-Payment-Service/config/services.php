@@ -41,6 +41,17 @@ return [
     // nilainya sama di semua service (Core, Product, Order, Reporting).
     'internal_token' => env('INTERNAL_SERVICE_TOKEN'),
 
+    'gateway' => [
+    'base_url' => env('GATEWAY_URL', 'http://localhost:8000'),
+],
+    'core_service' => [
+        'base_url' => env('CORE_SERVICE_URL', 'http://localhost:8001'),
+    ],
+
+    'product_service' => [
+        'base_url' => env('PRODUCT_SERVICE_URL', 'http://localhost:8002'),
+    ],
+
     // Konfigurasi Midtrans — digunakan oleh PaymentService
     // TODO: Uncomment setelah package midtrans-php terinstall
     // 'midtrans' => [

@@ -41,6 +41,7 @@ class AuthenticateGateway
             // attributes = metadata internal Laravel, TIDAK ikut ke request body/query
             // merge()    = masuk ke request input → ikut ke-forward ke downstream service 
             $userData = $response->json('data');
+            \Log::info('AUTH USER DATA', $userData ?? []); // untuk test perlu hapus
             $request->attributes->set('_auth_user', $userData);
 
         } catch (\Exception $e) {

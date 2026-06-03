@@ -21,8 +21,8 @@ class ProxyService
                 'Accept'             => 'application/json',
                 'X-Internal-Service' => 'api-gateway',
                 'X-Service-Token'    => config('services.internal_token'),
-                'X-User-Id'          => $request->attributes->get('_auth_user.user_id'),
-                'X-User-Role'        => $request->attributes->get('_auth_user.role'),
+                'X-User-Id'   => $request->attributes->get('_auth_user')['user_id'] ?? null,
+                'X-User-Role' => $request->attributes->get('_auth_user')['role'] ?? null,
                 'X-User-Name'        => $request->attributes->get('_auth_user.name'),
             ])->timeout(30);
 

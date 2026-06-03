@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { getProducts } from "../../api/productApi";
 import { getServices } from "../../api/serviceApi";
 
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const fmt = (n) =>
@@ -79,6 +80,7 @@ function ProductsTab({ cartItems, addToCart, updateQty, setCartOpen }) {
     const [activeCategory, setActiveCategory] = useState("All");
     const [loading, setLoading] = useState(true);
     const [added, setAdded] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const load = async () => {
@@ -114,6 +116,7 @@ function ProductsTab({ cartItems, addToCart, updateQty, setCartOpen }) {
             type: "product",
         }, 1);
         setAdded(p.product_id ?? p.id);
+        navigate("/patient/products");
     };
 
     if (loading) return <LoadingSkeleton count={8} cols={4} />;
@@ -371,120 +374,116 @@ function CartDrawer({ open, onClose, cartItems, updateQty, clearCart, totalPrice
             navigate("/login");
             return;
         }
-        navigate("/patient/order");
+        navigate("/patient/cart");
     };
 
     if (!open) return null;
 
     return (
         <>
+            {/* Backdrop */}
             <div
-                className="fixed inset-0 z-40"
-                style={{ background: "rgba(44,31,26,0.4)", backdropFilter: "blur(4px)" }}
+                className="fixed inset-0 z-40 bg-[rgba(44,31,26,0.4)] backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div
-                className="fixed top-0 right-0 h-full z-50 flex flex-col"
-                style={{
-                    width: "min(420px, 100vw)",
-                    background: "#faf8f5",
-                    boxShadow: "-8px 0 40px rgba(44,31,26,0.12)",
-                }}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between px-7 py-5" style={{ borderBottom: "1px solid rgba(184,124,90,0.12)" }}>
-                    <div>
-                        <p className="text-[10px] tracking-[0.12em] uppercase text-[#b87c5a] mb-0.5">Your</p>
-                        <h2 className="text-2xl font-normal text-[#2c1f1a]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-                            Cart
-                        </h2>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-full flex items-center justify-center transition hover:bg-stone-100 text-[#5a3e35]"
-                    >
-                        ✕
-                    </button>
-                </div>
 
-                {/* Items */}
-                <div className="flex-1 overflow-y-auto px-7 py-5">
-                    {cartItems.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-4">
-                            <span className="text-4xl opacity-20 text-[#b87c5a]">◇</span>
-                            <p className="text-sm text-[#c0a090]">Your cart is empty</p>
-                            <button
-                                onClick={onClose}
-                                className="text-sm px-5 py-2 rounded-full transition hover:opacity-80"
-                                style={{ background: "rgba(184,124,90,0.1)", color: "#8b4c34" }}
-                            >
-                                Continue Shopping
-                            </button>
+            {/* Modal */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="bg-[#faf8f5] rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-7 py-5 border-b border-[rgba(184,124,90,0.12)]">
+                        <div>
+                            <p className="text-[10px] tracking-[0.12em] uppercase text-[#b87c5a] mb-0.5">Your</p>
+                            <h2 className="text-2xl font-normal text-[#2c1f1a]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                                Cart
+                            </h2>
                         </div>
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            {cartItems.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="flex items-center gap-4 p-4 rounded-2xl"
-                                    style={{ background: "#fff", border: "1px solid rgba(184,124,90,0.1)" }}
+                        <button
+                            onClick={onClose}
+                            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 transition text-[#5a3e35]"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {/* Items */}
+                    <div className="flex-1 overflow-y-auto px-7 py-5">
+                        {cartItems.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 gap-4">
+                                <span className="text-4xl opacity-20 text-[#b87c5a]">◇</span>
+                                <p className="text-sm text-[#c0a090]">Your cart is empty</p>
+                                <button
+                                    onClick={onClose}
+                                    className="text-sm px-5 py-2 rounded-full hover:opacity-80 transition"
+                                    style={{ background: "rgba(184,124,90,0.1)", color: "#8b4c34" }}
                                 >
+                                    Continue Shopping
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3">
+                                {cartItems.map((item) => (
                                     <div
-                                        className="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0"
-                                        style={{ background: "linear-gradient(135deg, #fdf6ef, #f0ddd0)", color: "#b87c5a" }}
+                                        key={item.id}
+                                        className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-[rgba(184,124,90,0.1)]"
                                     >
-                                        {getIcon(item.id)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-[#2c1f1a] truncate">{item.name}</p>
-                                        <p className="text-xs mt-0.5 text-[#b87c5a]">{fmt(item.price)}</p>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                        <button
-                                            onClick={() => updateQty(item.id, item.qty - 1)}
-                                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs border"
-                                            style={{ borderColor: "rgba(184,124,90,0.3)", color: "#b87c5a" }}
+                                        <div
+                                            className="w-11 h-11 rounded-xl flex items-center justify-center text-lg shrink-0"
+                                            style={{ background: "linear-gradient(135deg, #fdf6ef, #f0ddd0)", color: "#b87c5a" }}
                                         >
-                                            −
-                                        </button>
-                                        <span className="text-sm w-4 text-center text-[#2c1f1a]">{item.qty}</span>
-                                        <button
-                                            onClick={() => updateQty(item.id, item.qty + 1)}
-                                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:opacity-80"
-                                            style={{ background: "linear-gradient(135deg, #c4865f, #9a5030)", color: "#fff" }}
-                                        >
-                                            +
-                                        </button>
+                                            {getIcon(item.id)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-[#2c1f1a] truncate">{item.name}</p>
+                                            <p className="text-xs mt-0.5 text-[#b87c5a]">{fmt(item.price)}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <button
+                                                onClick={() => updateQty(item.id, item.qty - 1)}
+                                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs border border-[rgba(184,124,90,0.3)] text-[#b87c5a]"
+                                            >
+                                                −
+                                            </button>
+                                            <span className="text-sm w-4 text-center text-[#2c1f1a]">{item.qty}</span>
+                                            <button
+                                                onClick={() => updateQty(item.id, item.qty + 1)}
+                                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:opacity-80"
+                                                style={{ background: "linear-gradient(135deg, #c4865f, #9a5030)", color: "#fff" }}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer */}
+                    {cartItems.length > 0 && (
+                        <div className="px-7 py-6 border-t border-[rgba(184,124,90,0.12)]">
+                            <div className="flex justify-between mb-1">
+                                <span className="text-sm text-[#9a6e62]">Subtotal</span>
+                                <span className="text-sm font-semibold text-[#2c1f1a]">{fmt(totalPrice)}</span>
+                            </div>
+                            <p className="text-xs text-[#b0907e] mb-5">Shipping calculated at checkout</p>
+                            <button
+                                onClick={handleCheckout}
+                                className="w-full py-3.5 rounded-full text-white text-sm tracking-wide hover:opacity-90 transition"
+                                style={{ background: "linear-gradient(135deg, #c4865f, #9a5030)" }}
+                            >
+                                Checkout — {fmt(totalPrice)}
+                            </button>
+                            <button
+                                onClick={clearCart}
+                                className="w-full mt-2 py-2 text-xs text-[#c0a090] hover:opacity-70 transition"
+                            >
+                                Clear cart
+                            </button>
                         </div>
                     )}
                 </div>
-
-                {/* Footer */}
-                {cartItems.length > 0 && (
-                    <div className="px-7 py-6" style={{ borderTop: "1px solid rgba(184,124,90,0.12)" }}>
-                        <div className="flex justify-between mb-1">
-                            <span className="text-sm text-[#9a6e62]">Subtotal</span>
-                            <span className="text-sm font-semibold text-[#2c1f1a]">{fmt(totalPrice)}</span>
-                        </div>
-                        <p className="text-xs text-[#b0907e] mb-5">Shipping calculated at checkout</p>
-                        <button
-                            onClick={handleCheckout}
-                            className="w-full py-3.5 rounded-full text-white text-sm tracking-wide transition hover:opacity-90"
-                            style={{ background: "linear-gradient(135deg, #c4865f, #9a5030)" }}
-                        >
-                            Checkout — {fmt(totalPrice)}
-                        </button>
-                        <button
-                            onClick={clearCart}
-                            className="w-full mt-2 py-2 text-xs text-[#c0a090] transition hover:opacity-70"
-                        >
-                            Clear cart
-                        </button>
-                    </div>
-                )}
             </div>
         </>
     );
@@ -620,7 +619,7 @@ export default function InProductsPage() {
                             Get a <em>personalised skin plan</em>
                         </h2>
                         <Link
-                            to={isAuthenticated ? "/patient/booking" : "/login"}
+                            to="/patient/cart"
                             className="inline-block px-8 py-3 rounded-full text-white text-sm tracking-wide transition hover:opacity-90"
                             style={{ background: "linear-gradient(135deg, #c4865f, #8b4c34)" }}
                         >

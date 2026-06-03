@@ -38,6 +38,9 @@ import api from "./axios";
 export const getOrders = (params = {}) =>
   api.get("/orders", { params });
 
+export const getOrdersByPatient = (patientId) =>
+  api.get(`/orders/patient/${patientId}`);
+
 // ── Get Order Detail ──────────────────────────────────────────────────────
 // @param {string|number} id
 // [NOTE] Response include items[] dan payment object.

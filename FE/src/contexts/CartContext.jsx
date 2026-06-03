@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo } from "react";
 import { createOrder } from "../api/orderApi";
+import { useAuth } from "./AuthContext";
 
 // ─── Context ───────────────────────────────────────────────────────────────
 const CartContext = createContext(null);
@@ -33,6 +34,7 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => loadCartFromStorage());
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  const { user } = useAuth();
 
   // ── Helper: update state + sync ke localStorage ───────────────────────
   const syncCart = useCallback((updater) => {
@@ -100,6 +102,8 @@ export function CartProvider({ children }) {
   //        Redirect ke payment_url dilakukan di komponen/page,
   //        bukan di sini, agar context tidak coupling ke router.
   const checkout = useCallback(async ({ bookingId = null } = {}) => {
+    console.log('checkout called, user:', user);        // ← tambah ini
+    console.log('cartItems:', cartItems);               // ← tambah ini
     if (cartItems.length === 0) {
       setCheckoutError("Cart kosong. Tambahkan produk terlebih dahulu.");
       return null;
@@ -110,6 +114,7 @@ export function CartProvider({ children }) {
 
     try {
       const payload = {
+        patient_id: user?.patient_id,
         // [NOTE] booking_id opsional — null jika beli produk tanpa booking.
         ...(bookingId && { booking_id: bookingId }),
         items: cartItems.map((item) => ({
@@ -117,6 +122,7 @@ export function CartProvider({ children }) {
           qty: item.qty,
         })),
       };
+      console.log("checkout payload:", payload); // ← tambah ini perlu hapus
 
       const res = await createOrder(payload);
       const order = res.data?.data ?? res.data;
@@ -136,7 +142,7 @@ export function CartProvider({ children }) {
     } finally {
       setIsCheckingOut(false);
     }
-  }, [cartItems, clearCart]);
+  }, [cartItems, clearCart, user]);
 
   // ── Derived values (memoized) ─────────────────────────────────────────
   // Dihitung satu kali saat cartItems berubah, tidak setiap render.
