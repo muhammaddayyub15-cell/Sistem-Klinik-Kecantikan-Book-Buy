@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->id();
+            $table->id('product_id');
             $table->string('product_name');
             $table->string('SKU')->unique();
             // FK ke product_categories di database product-service dibuat setelah Product Service berjalan

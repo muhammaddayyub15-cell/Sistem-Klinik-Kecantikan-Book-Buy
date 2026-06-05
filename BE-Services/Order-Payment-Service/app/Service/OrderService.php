@@ -9,6 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class OrderService extends BaseService
@@ -121,9 +122,9 @@ class OrderService extends BaseService
 
     private function fetchPatient(int $patientId): array
     {
-        $gatewayUrl = config('services.core.base_url'); // direct to core service | pakai gateway 'services.gateway.base_url'
+        $gatewayUrl = config('services.gateway.base_url'); // direct to core service | pakai gateway 'services.gateway.base_url'
         $token      = request()->bearerToken();            // ← forward token user
-        \Log::info('fetchPatient token', ['token' => request()->bearerToken()]);
+        Log::info('fetchPatient token', ['token' => request()->bearerToken()]);
 
         $response = Http::withHeaders([
             'Authorization'      => 'Bearer ' . $token,
@@ -146,7 +147,7 @@ class OrderService extends BaseService
 
     private function fetchProducts(array $productIds): array
     {
-        $gatewayUrl = config('services.core.base_url'); //  pakai gateway
+        $gatewayUrl = config('services.gateway.base_url'); //  pakai gateway
         $token      = request()->bearerToken();            // ← forward token user
         $snapshots  = [];
 

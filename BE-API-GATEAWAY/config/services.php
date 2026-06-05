@@ -9,6 +9,10 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    'gateway' => [
+    'base_url' => env('GATEWAY_URL', 'http://localhost:8000'),
+    ],
+
     'core_service' => [
         'base_url' => env('CORE_SERVICE_URL', 'http://localhost:8001'),
     ],

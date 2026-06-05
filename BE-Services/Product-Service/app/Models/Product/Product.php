@@ -23,7 +23,12 @@ class Product extends Model
 {
     use SoftDeletes;
 
+    protected $primaryKey = 'product_id';
+    protected $keyType = 'int';
+    public $incrementing = true;
+
     protected $table = 'products';
+
 
     protected $fillable = [
         'product_name',

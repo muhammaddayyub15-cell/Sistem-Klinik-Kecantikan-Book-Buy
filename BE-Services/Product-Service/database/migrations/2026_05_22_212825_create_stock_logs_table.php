@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('stock_logs', function (Blueprint $table) {
             $table->id();
             // FK ke products
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->unsignedBigInteger('product_id');
+            $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
             // Positif = stok masuk, negatif = stok keluar
             $table->integer('change_qty');
             $table->enum('type', ['in', 'out', 'adjustment']);
